@@ -16,12 +16,12 @@
             </a>
             <!-- Tracker link -->
             <div data-status="Off" style="padding-bottom: 4px; justify-content: flex-start; align-items: flex-start; gap: 10px; display: flex">
-                <div id="tracker" style="color: #333333; font-size: 20px; font-family: Sarabun; font-weight: 400; line-height: 32px; word-wrap: break-word">Tracker: 1/10</div>
+                <div id="tracker" style="color: #333333; font-size: 20px; font-family: Sarabun; font-weight: 400; line-height: 32px; word-wrap: break-word">Tracker: 1/30</div>
             </div>
             <!-- Safety Score tab -->
-            <div data-status="Off" style="padding-bottom: 4px; justify-content: flex-start; align-items: flex-start; gap: 10px; display: flex">
+            <!-- <div data-status="Off" style="padding-bottom: 4px; justify-content: flex-start; align-items: flex-start; gap: 10px; display: flex">
                 <div style="color: #333333; font-size: 20px; font-family: Sarabun; font-weight: 400; line-height: 32px; word-wrap: break-word">Safety Score:</div>
-            </div>
+            </div> -->
             <!-- Risk Score tab -->
             <div data-status="Off" style="padding-bottom: 4px; justify-content: flex-start; align-items: flex-start; gap: 10px; display: flex">
                 <div style="color: #333333; font-size: 20px; font-family: Sarabun; font-weight: 400; line-height: 32px; word-wrap: break-word">Risk Score:</div>
@@ -62,6 +62,7 @@
                   background-color: #1B3360; /* Solid color when checked */
                   border: none; /* Remove the border when checked */
                 }
+
               </style>
               <div style="left: 84px; top: 643px; position: absolute;">
                 <label style="display: flex; justify-content: flex-start; align-items: center; gap: 10px; cursor: pointer;">
@@ -378,30 +379,43 @@
             robotAttributesDiv.style.borderRadius = '5px';
             canvas.parentElement.appendChild(robotAttributesDiv);
 
-            // Create a tooltip for robot mission success info
+            // Create and style the tooltip (now appended to body)
             const tooltip = document.createElement('div');
             tooltip.id = 'robotTooltip';
-            tooltip.style.position = 'absolute';
-            tooltip.style.zIndex = '20';
-            tooltip.style.background = 'rgba(255,255,255,0.9)';
-            tooltip.style.padding = '5px';
-            tooltip.style.border = '1px solid #ccc';
-            tooltip.style.borderRadius = '5px';
-            tooltip.style.display = 'none';
-            tooltip.style.fontFamily = 'Sarabun, sans-serif';
-            tooltip.style.fontSize = '14px';
-            tooltip.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
-            tooltip.style.minWidth = '120px';
-            canvas.parentElement.appendChild(tooltip);
+            Object.assign(tooltip.style, {
+                position: 'absolute',
+                zIndex: '1000',
+                background: 'rgba(255,255,255,0.95)',
+                padding: '8px 12px',
+                border: '1px solid #ccc',
+                borderRadius: '6px',
+                fontFamily: 'Sarabun, sans-serif',
+                fontSize: '14px',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
+                minWidth: '150px',
+                pointerEvents: 'none',
+                display: 'none',
+                transition: 'opacity 0.2s ease'
+            });
+            document.body.appendChild(tooltip);
 
             // Add the missing scoring functions
             function calculateVisibilityScore(robot) {
-                // Calculate based on distance from operator and obstacles
-                const distanceToOperator = Math.sqrt(
-                    Math.pow(robot.x - operator.x, 2) + 
-                    Math.pow(robot.y - operator.y, 2)
-                );
-                return 1 - (distanceToOperator / (canvasWidth * 0.7)); // Normalize to 0-1 range
+            // Calculate maximum possible distance (from operator to farthest corner)
+            const maxPossibleDistance = Math.sqrt(
+                Math.pow(canvasWidth/2, 2) +  // Max horizontal distance
+                Math.pow(canvasHeight, 2)     // Max vertical distance
+            );
+            
+            // Calculate actual distance
+            const actualDistance = Math.sqrt(
+                Math.pow(robot.x - operator.x, 2) + 
+                Math.pow(robot.y - operator.y, 2)
+            );
+            
+            // Return normalized score between 0 and 1
+            // Using exponential decay for more realistic visibility falloff
+            return Math.exp(-actualDistance / (maxPossibleDistance * 0.5));
             }
 
             function calculateTraversabilityScore(robot) {
@@ -416,47 +430,70 @@
                 return openCells / path.length;
             }
 
-            // Add event listener to canvas to show tooltip when hovering near a robot
+            // Improved hover detection and positioning
             canvas.addEventListener('mousemove', function(evt) {
                 const rect = canvas.getBoundingClientRect();
-                const mx = evt.clientX - rect.left;
-                const my = evt.clientY - rect.top;
-                let found = false;
+                const mouseX = evt.clientX - rect.left;
+                const mouseY = evt.clientY - rect.top;
+                
+                let closestRobot = null;
+                let minDistance = Infinity;
+                
+                // Find closest robot to mouse pointer
                 robots.forEach((robot, index) => {
-                    const dx = mx - robot.x;
-                    const dy = my - robot.y;
-                    if (Math.sqrt(dx * dx + dy * dy) < 10) { // hover threshold
-                        tooltip.style.display = 'block';
-
-                        // Calculate visibility and traversability scores for the current robot
-                        const visibility = calculateVisibilityScore(robot);
-                        const traversability = calculateTraversabilityScore(robot);
-
-                        // Display vis and trav values for the current robot
-                        tooltip.innerHTML = `Robot ${index + 1}<br>` +
-                            `vis${index + 1}: ${visibility.toFixed(2)}<br>` +
-                            `trav${index + 1}: ${traversability.toFixed(2)}`;
-
-                        // Compute tooltip position
-                        let tooltipX = robot.x + 15;
-                        let tooltipY = robot.y - 15;
-                        const tooltipRect = tooltip.getBoundingClientRect();
-                        // Adjust if tooltip would go off the right edge
-                        if (tooltipX + tooltipRect.width > canvasWidth) {
-                            tooltipX = robot.x - tooltipRect.width - 15;
-                        }
-                        // Adjust if tooltip goes above canvas
-                        if (tooltipY < 0) {
-                            tooltipY = robot.y + 15;
-                        }
-                        tooltip.style.left = tooltipX + 'px';
-                        tooltip.style.top = tooltipY + 'px';
-                        found = true;
+                    const dx = mouseX - robot.x;
+                    const dy = mouseY - robot.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < 20 && distance < minDistance) {
+                        minDistance = distance;
+                        closestRobot = { robot, index };
                     }
                 });
-                if (!found) {
+                
+                if (closestRobot) {
+                    const { robot, index } = closestRobot;
+                    const visibility = calculateVisibilityScore(robot);
+                    const traversability = calculateTraversabilityScore(robot);
+                    
+                    // Update tooltip content
+                    tooltip.innerHTML = `
+                        <div style="font-weight:700;margin-bottom:4px;">Robot ${index + 1}</div>
+                        <div>Visibility: <span style="font-weight:600">${visibility.toFixed(2)}</span></div>
+                        <div>Traversability: <span style="font-weight:600">${traversability.toFixed(2)}</span></div>
+                    `;
+                    
+                    // Calculate position (default to right side)
+                    let tooltipX = robot.x + 20;
+                    let tooltipY = robot.y - tooltip.offsetHeight / 2;
+                    
+                    // Adjust for right edge
+                    if (tooltipX + tooltip.offsetWidth > canvasWidth) {
+                        tooltipX = robot.x - tooltip.offsetWidth - 20;
+                    }
+                    
+                    // Adjust for bottom edge
+                    if (tooltipY + tooltip.offsetHeight > canvasHeight) {
+                        tooltipY = canvasHeight - tooltip.offsetHeight - 10;
+                    }
+                    
+                    // Adjust for top edge
+                    if (tooltipY < 10) {
+                        tooltipY = 10;
+                    }
+                    
+                    // Apply position with canvas offset
+                    tooltip.style.left = `${rect.left + tooltipX}px`;
+                    tooltip.style.top = `${rect.top + tooltipY}px`;
+                    tooltip.style.display = 'block';
+                } else {
                     tooltip.style.display = 'none';
                 }
+            });
+
+            // Handle mouse leaving canvas
+            canvas.addEventListener('mouseleave', function() {
+                tooltip.style.display = 'none';
             });
 
             // Update redrawCanvas to display robot attributes
@@ -518,12 +555,12 @@
             function setCount(count) {
                 localStorage.setItem('count', count);
                 // Update the tracker display immediately
-                document.getElementById('tracker').innerText = 'Tracker: ' + count + '/10';
+                document.getElementById('tracker').innerText = 'Tracker: ' + count + '/30';
             }
 
             // Initialize counter display
             let currentCount = getCount();
-            document.getElementById('tracker').innerText = 'Tracker: ' + currentCount + '/10';
+            document.getElementById('tracker').innerText = 'Tracker: ' + currentCount + '/30';
             
             // Increment the count after initialization
             currentCount += 1;
@@ -609,7 +646,7 @@
                 console.log('Current count:', currentCount); // Debugging
                 
                 // Check if this is the last trial (10th)
-                if (currentCount >= 10) {
+                if (currentCount >= 30) {
                     if (userResponses.length > 0) {
                         console.log('Preparing to download responses...'); // Debugging
                         const csvData = convertToCSV(userResponses);
