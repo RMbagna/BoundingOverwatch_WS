@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mission: Urgent Medical Assistance</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f4f4f4;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+            background: #333;
+            color: white;
+        }
+        .header a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+        }
+        .main-content {
+            display: flex;
+            padding: 20px;
+        }
+        .map-section {
+            flex: 3;
+            margin-right: 20px;
+        }
+        .map-container {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            background: #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .map-container canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        .control-panel {
+            flex: 1;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .control-panel h3 {
+            margin-top: 0;
+        }
+        .control-panel label {
+            display: block;
+            margin: 10px 0;
+        }
+        .mission-success {
+            margin-top: 20px;
+        }
+        .mission-success div {
+            margin: 10px 0;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background: #333;
+            color: white;
+        }
+        .footer button {
+            padding: 10px 20px;
+            margin: 0 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .footer button.next {
+            background: #1B6048;
+            color: white;
+        }
+        .footer button.switch {
+            background: #1B3360;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <a href="#">Home</a>
+            <a href="#">Background</a>
+            <a href="#">Contact Us</a>
+            <a href="#">Safety Score</a>
+            <a href="#">Risk Score</a>
+        </div>
+        <a href="#">Quit</a>
+    </div>
+    <div class="main-content">
+        <div class="map-section">
+            <div class="map-container">
+                <canvas id="overlayCanvas" width="800" height="500"></canvas>
+            </div>
+        </div>
+        <div class="control-panel">
+            <h3>Select Robot Path</h3>
+            <label>
+                <input type="radio" name="robot" value="robot1"> Robot 1
+            </label>
+            <label>
+                <input type="radio" name="robot" value="robot2"> Robot 2
+            </label>
+            <label>
+                <input type="radio" name="robot" value="robot3"> Robot 3
+            </label>
+            <div class="mission-success">
+                <h3>Mission Success Indicators</h3>
+                <div style="color: green;">High Success: 80%</div>
+                <div style="color: yellow;">Marginal Success: 50%</div>
+                <div style="color: red;">Low Success: 20%</div>
+            </div>
+            <div class="additional-data">
+                <h3>Additional Data</h3>
+                <div>Visibility: 75%</div>
+                <div>Traversability: 60%</div>
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        <button class="next">Next</button>
+        <button class="switch">Switch</button>
+    </div>
+    <script>
+        const canvas = document.getElementById('overlayCanvas');
+        const ctx = canvas.getContext('2d');
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        const gridCols = 20;
+        const gridRows = 20;
+        const cellWidth = canvasWidth / gridCols;
+        const cellHeight = canvasHeight / gridRows;
+        let gridMap = [];
+        let robots = [];
+
+        // Define operator marker at bottom center of the grid.
+        const operator = {
+          row: gridRows - 1,
+          col: Math.floor(gridCols / 2),
+          get x() { return (this.col + 0.5) * cellWidth; },
+          get y() { return (this.row + 0.5) * cellHeight; }
+        };
+
+        // Create a grid map with open (true) or obstructed (false) cells.
+        function generateMap() {
+          gridMap = [];
+          for (let r = 0; r < gridRows; r++) {
+            let row = [];
+            for (let c = 0; c < gridCols; c++) {
+              // 70% chance cell is open, 30% obstructed.
+              row.push(Math.random() < 0.7);
+            }
+            gridMap.push(row);
+          }
+        }
+
+        // Draw the map overlay. Obstructed cells are darkened.
+        function drawMap() {
+          for (let r = 0; r < gridRows; r++) {
+            for (let c = 0; c < gridCols; c++) {
+              if (!gridMap[r][c]) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'; // Increased opacity for better visibility
+                ctx.fillRect(c * cellWidth, r * cellHeight, cellWidth, cellHeight);
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.7)'; // Add a border to obstructed cells
+                ctx.strokeRect(c * cellWidth, r * cellHeight, cellWidth, cellHeight);
+              }
+            }
+          }
+        }
+
+        // Get all open cells from the grid.
+        function getOpenCells() {
+          const openCells = [];
+          for (let r = 0; r < gridRows; r++) {
+            for (let c = 0; c < gridCols; c++) {
+              if (gridMap[r][c]) {
+                openCells.push({ row: r, col: c });
+              }
+            }
+          }
+          return openCells;
+        }
+
+        // Select open cells randomly to place robots.
+        function generateRobots(numRobots) {
+          const openCells = getOpenCells();
+          robots = [];
+          for (let i = 0; i < numRobots && openCells.length; i++) {
+            const index = Math.floor(Math.random() * openCells.length);
+            const cell = openCells.splice(index, 1)[0];
+            const x = (cell.col + 0.5) * cellWidth;
+            const y = (cell.row + 0.5) * cellHeight;
+            robots.push({
+              x,
+              y,
+              row: cell.row,
+              col: cell.col
+            });
+          }
+        }
+
+        // Draw robots as triangles.
+        function drawRobots() {
+          robots.forEach(robot => {
+            ctx.beginPath();
+            ctx.moveTo(robot.x, robot.y - 10);
+            ctx.lineTo(robot.x + 10, robot.y + 10);
+            ctx.lineTo(robot.x - 10, robot.y + 10);
+            ctx.closePath();
+            ctx.fillStyle = 'blue';
+            ctx.fill();
+          });
+        }
+
+        // Draw the operator marker as a red circle.
+        function drawOperator() {
+          ctx.beginPath();
+          ctx.arc(operator.x, operator.y, 10, 0, 2 * Math.PI);
+          ctx.fillStyle = 'red';
+          ctx.fill();
+        }
+
+        // Redraw the entire canvas: image, map overlay, robots, operator, and paths.
+        function redrawCanvas() {
+          ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+          drawMap();
+          drawOperator();
+          drawRobots();
+        }
+
+        window.onload = function() {
+          generateMap();
+          generateRobots(3);
+          redrawCanvas();
+        };
+    </script>
+</body>
+</html>

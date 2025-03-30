@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Radar Chart Example</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <!-- Main container -->
+  <div style="width: 1440px; height: 1118px; position: relative; background: white; overflow: hidden">
+      
+      <!-- Navigation bar -->
+      <div style="width: 1440px; height: 94px; padding-left: 100px; padding-right: 100px; left: 0px; top: 0px; position: absolute; justify-content: space-between; align-items: center; display: inline-flex">
+      <!-- Navigation links -->
+     <div style="justify-content: flex-start; align-items: flex-start; gap: 52px; display: flex">
+        <a href="home_page.html" style="text-decoration: none;">
+        <div data-status="Off" style="padding-bottom: 4px; justify-content: flex-start; align-items: flex-start; gap: 10px; display: flex">
+        <div style="color: #333333; font-size: 20px; font-family: Sarabun; font-weight: 400; line-height: 32px; word-wrap: break-word">Home</div>
+        </div>
+        </a>
+        <a href="background_page.html" style="text-decoration: none;">
+        <div data-status="Off" style="padding-bottom: 4px; justify-content: flex-start; align-items: flex-start; gap: 10px; display: flex">
+        <div style="color: #333333; font-size: 20px; font-family: Sarabun; font-weight: 400; line-height: 32px; word-wrap: break-word">Background</div>
+        </div>
+        </a>
+                   <!-- Tracker link -->
+            <div data-status="Off" style="padding-bottom: 4px; justify-content: flex-start; align-items: flex-start; gap: 10px; display: flex">
+                <div id="tracker" style="color: #333333; font-size: 20px; font-family: Sarabun; font-weight: 400; line-height: 32px; word-wrap: break-word">Tracker: 1/10</div>
+            </div>
+            <script>
+                // Function to get the current count from localStorage
+                function getCount() {
+                    let count = localStorage.getItem('count');
+                    return count ? parseInt(count) : 1; // Initialize to 1 if not found
+                }
+
+                // Function to set the count in localStorage
+                function setCount(count) {
+                    localStorage.setItem('count', count);
+                }
+
+                // Get the current count
+                let currentCount = getCount();
+
+                // Update the tracker display
+                document.getElementById('tracker').innerText = 'Tracker: ' + currentCount + '/10';
+
+                // Increment the count by 2
+                currentCount += 1;
+
+                // Check if the count exceeds 9
+                if (currentCount > 11) {
+                    // Reset the count to 1
+                    currentCount = 0;
+                    setCount(currentCount);
+                    //Redirect to Bias-Review.html
+                    window.location.href = 'BO_mission_next.html';
+                } else {
+                    // Update the count in localStorage
+                    setCount(currentCount);
+                }
+            </script>
+        <div data-status="Off" style="padding-bottom: 4px; justify-content: flex-start; align-items: flex-start; gap: 10px; display: flex">
+        <div id="earnings" style="color: #333333; font-size: 20px; font-family: Sarabun; font-weight: 400; line-height: 32px; word-wrap: break-word">Earnings: $0</div>
+        </div>
+      <div data-status="Off" style="padding-bottom: 4px; justify-content: flex-start; align-items: flex-start; gap: 10px; display: flex">
+        <div id="timeElapsed" style="color: #333333; font-size: 20px; font-family: Sarabun; font-weight: 400; line-height: 32px; word-wrap: break-word">Time Elapsed: 0s</div>
+      </div>
+      </div>
+
+      <script>
+        let seconds = 0;
+        const timeElapsedDiv = document.getElementById('timeElapsed');
+
+        function incrementTime() {
+          seconds++;
+          timeElapsedDiv.textContent = `Time Elapsed: ${seconds}s`;
+        }
+
+        setInterval(incrementTime, 1000);
+      </script>
+      <!-- Quit button -->
+      <a href="#" id="quitButton" style="text-decoration: none;">
+      <div style="width: 129px; height: 54px; padding-left: 24px; padding-right: 24px; background: rgba(246.50, 31.84, 31.84, 0.77); border-radius: 32px; justify-content: center; align-items: center; gap: 8px; display: flex">
+        <div style="flex-direction: column; justify-content: center; align-items: center; display: inline-flex">
+        <div style="justify-content: flex-start; align-items: flex-start; gap: 8px; display: inline-flex">
+        <div style="color: #FAEEEE; font-size: 16px; font-family: Sarabun; font-weight: 700; line-height: 24px; word-wrap: break-word">Quit</div>
+        </div>
+        </div>
+      </div>
+      </a>
+      </div>
+    <!-- Main content area -->
+    <div style="width: 1440px; height: 1024px; left: 0px; top: 94px; position: absolute">
+      <!-- Right side content -->
+      <div style="width: 608px; height: 1024px; left: 732px; top: 0px; position: absolute">
+        <div style="width: 1036px; height: 1024px; left: -328px; top: 0px; position: absolute; background: rgba(48, 201.53, 244, 0.12)"></div>
+        <div style="width: 555px; left: 84px; top: 329px; position: absolute; color: #333333; font-size: 28px; font-family: Sarabun; font-weight: 700; line-height: 45px; word-wrap: break-word">Which of the following robot do you prefer to work with?</div>
+        <!-- Robot selection options -->
+        <style>
+          input[type="radio"] {
+            width: 24px;
+            height: 24px;
+            appearance: none;
+            outline: 1.50px #1B3360 solid;
+            border-radius: 50%;
+            position: relative;
+            cursor: pointer;
+          }
+
+          input[type="radio"]:checked {
+            background-color: #1B3360; /* Solid color when checked */
+            border: none; /* Remove the border when checked */
+          }
+        </style>
+        <div style="left: 84px; top: 643px; position: absolute;">
+          <label style="display: flex; justify-content: flex-start; align-items: center; gap: 10px; cursor: pointer;">
+            <input type="radio" name="robot" value="robot3"/>
+            <div style="color: #333333; font-size: 24px; font-family: Sarabun; font-weight: 400; line-height: 24px; word-wrap: break-word">Robot 3</div>
+          </label>
+        </div>
+        <div style="left: 84px; top: 559px; position: absolute;">
+          <label style="display: flex; justify-content: flex-start; align-items: center; gap: 10px; cursor: pointer;">
+            <input type="radio" name="robot" value="robot2"/>
+            <div style="color: #333333; font-size: 24px; font-family: Sarabun; font-weight: 400; line-height: 24px; word-wrap: break-word">Robot 2</div>
+          </label>
+        </div>
+        <div style="left: 84px; top: 488px; position: absolute;">
+          <label style="display: flex; justify-content: flex-start; align-items: center; gap: 10px; cursor: pointer;">
+            <input type="radio" name="robot" value="robot1"/>
+            <div style="color: #333333; font-size: 24px; font-family: Sarabun; font-weight: 400; line-height: 24px; word-wrap: break-word">Robot 1</div>
+          </label>
+        </div>
+        <!-- Navigation buttons -->
+        <a href="easy_mode.html" style="text-decoration: none;">
+        <div style="width: 181px; height: 54px; padding-left: 24px; padding-right: 24px; left: 361px; top: 754px; position: absolute; background: #1B6048; border-radius: 32px; flex-direction: column; justify-content: center; align-items: center; display: inline-flex">
+          <div style="flex-direction: column; justify-content: center; align-items: center; display: flex">
+        <div style="justify-content: flex-start; align-items: flex-start; gap: 8px; display: inline-flex">
+          <div style="color: white; font-size: 16px; font-family: Sarabun; font-weight: 700; line-height: 24px; word-wrap: break-word">Next</div>
+        </div>
+          </div>
+        </div>
+        </a>
+        <a href="home_page.html" style="text-decoration: none;" id="switchButton">
+        <div style="width: 181px; height: 54px; padding-left: 24px; padding-right: 24px; left: 100px; top: 754px; position: absolute; background: #1B3360; border-radius: 32px; flex-direction: column; justify-content: center; align-items: center; display: inline-flex">
+          <div style="flex-direction: column; justify-content: center; align-items: center; display: flex">
+        <div style="justify-content: flex-start; align-items: flex-start; gap: 8px; display: inline-flex">
+          <div style="color: white; font-size: 16px; font-family: Sarabun; font-weight: 700; line-height: 24px; word-wrap: break-word">Switch</div>
+        </div>
+          </div>
+        </div>
+        </a>
+      </div>
+      <!-- Radar chart container -->
+      <div style="width: 659px; height: 870px; left: 100px; top: 77px; position: absolute; box-shadow: 0px 6px 40px rgba(56.52, 119.95, 178.50, 0.08)">
+        <div style="width: 659px; height: 870px; left: 0px; top: 0px; position: absolute; background: #D9D9D9; border-radius: 24px"></div>
+        <canvas id="radarChart" style="width: 659px; height: 870px; left: 0px; top: 0px; position: absolute;"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Function to generate random values for the radar chart
+    function getRandomValues() {
+      return Array.from({ length: 5 }, () => (Math.random()).toFixed(2));
+    }
+
+    // Get the context of the canvas element
+    const ctx = document.getElementById('radarChart').getContext('2d');
+    // Data for the radar chart
+    const data = {
+      labels: ['Energy', 'Pace', 'Safety', 'Reliability', 'Computational Load'],
+      datasets: [
+        {
+          label: 'Robot 1',
+          data: getRandomValues(),
+          fill: true,
+          backgroundColor: 'rgba(255, 99, 132, 0.2)',
+          borderColor: 'rgb(255, 99, 132)',
+          pointBackgroundColor: 'rgb(255, 99, 132)',
+          pointBorderColor: '#fff',
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderColor: 'rgb(255, 99, 132)'
+        },
+        {
+          label: 'Robot 2',
+          data: getRandomValues(),
+          fill: true,
+          backgroundColor: 'rgba(54, 162, 235, 0.2)',
+          borderColor: 'rgb(54, 162, 235)',
+          pointBackgroundColor: 'rgb(54, 162, 235)',
+          pointBorderColor: '#fff',
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderColor: 'rgb(54, 162, 235)'
+        },
+        {
+          label: 'Robot 3',
+          data: getRandomValues(),
+          fill: true,
+          backgroundColor: 'rgba(75, 192, 192, 0.2)',
+          borderColor: 'rgb(75, 192, 192)',
+          pointBackgroundColor: 'rgb(75, 192, 192)',
+          pointBorderColor: '#fff',
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderColor: 'rgb(75, 192, 192)'
+        }
+      ]
+    };
+
+    // Configuration options for the radar chart
+    const config = {
+      type: 'radar',
+      data: data,
+      options: {
+        plugins: {
+          title: {
+            display: true,
+            text: 'Robot Attributes Radar Chart'
+          },
+          legend: {
+            display: true,
+            position: 'bottom'
+          }
+        },
+        scales: {
+          r: {
+            min: 0,
+            max: 1,
+            ticks: {
+              stepSize: 0.1
+            }
+          }
+        },
+        elements: {
+          line: {
+            borderWidth: 3
+          }
+        }
+      }
+    };
+
+    // Create a new radar chart
+    const radarChart = new Chart(ctx, config);
+
+    // Initialize earnings from localStorage or set to $5 if not present
+    let earnings = parseFloat(localStorage.getItem('earnings')) || 5;
+    document.getElementById('earnings').textContent = `Earnings: $${earnings.toFixed(2)}`;
+
+    // Function to update earnings based on selected robot
+    function updateEarnings() {
+      const selectedRobot = localStorage.getItem('selectedRobot');
+      if (selectedRobot) {
+        const robotIndex = selectedRobot.slice(-1) - 1;
+        const robotData = data.datasets[robotIndex].data;
+        const newEarnings = robotData.reduce((sum, value) => sum + parseFloat(value), 0);
+        earnings += newEarnings;
+        document.getElementById('earnings').textContent = `Earnings: $${earnings.toFixed(2)}`;
+        localStorage.setItem('earnings', earnings.toFixed(2));
+        localStorage.removeItem('selectedRobot'); // Clear the selection after updating earnings
+      }
+    }
+
+    // Add event listeners to radio buttons
+    document.querySelectorAll('input[name="robot"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        localStorage.setItem('selectedRobot', radio.value);
+      });
+    });
+
+    // Add event listener to the home button to reset earnings
+     document.querySelector('a[href="home_page.html"]').addEventListener('click', () => {
+      earnings = 5;
+      localStorage.setItem('earnings', earnings.toFixed(2));
+      document.getElementById('earnings').textContent = `Earnings: $${earnings.toFixed(2)}`;
+     });
+
+    // Add event listener to the switch button to reset earnings
+    document.getElementById('switchButton').addEventListener('click', () => {
+      earnings = 0;
+      localStorage.setItem('earnings', earnings.toFixed(2));
+      document.getElementById('earnings').textContent = `Earnings: $${earnings.toFixed(2)}`;
+    });
+
+    // Function to download CSV file
+    function downloadCSV(csv, filename) {
+      const csvFile = new Blob([csv], { type: 'text/csv' });
+      const downloadLink = document.createElement('a');
+      downloadLink.download = filename;
+      downloadLink.href = window.URL.createObjectURL(csvFile);
+      downloadLink.style.display = 'none';
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+    }
+
+    // Function to generate CSV content
+    function generateCSV() {
+      const headers = ['Trial Task', 'Trial Number', 'Robot Attributes', 'User Choice', 'Earnings', 'Time Elapsed'];
+      const rows = [];
+      const selectedRobot = localStorage.getItem('selectedRobot');
+      const robotIndex = selectedRobot ? selectedRobot.slice(-1) - 1 : -1;
+      const robotData = robotIndex >= 0 ? data.datasets[robotIndex].data.join('; ') : '';
+      const userChoice = selectedRobot || 'None';
+      const trialTask = 'Task 1'; // Example trial task
+      const trialNumber = 1; // Example trial number
+      const timeElapsed = seconds;
+
+      rows.push([trialTask, trialNumber, robotData, userChoice, earnings.toFixed(2), timeElapsed]);
+
+      let csvContent = headers.join(',') + '\n';
+      rows.forEach(row => {
+        csvContent += row.join(',') + '\n';
+      });
+
+      return csvContent;
+    }
+
+    // Add event listener to the quit button to download CSV
+    document.getElementById('quitButton').addEventListener('click', () => {
+      const csvContent = generateCSV();
+      downloadCSV(csvContent, 'user_responses.csv');
+    });
+
+    // Initial earnings update
+    updateEarnings();
+  </script>
+</body>
+</html>
