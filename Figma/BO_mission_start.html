@@ -278,83 +278,144 @@
               }
           }
 
-          // Generate path from operator to robot
-          function generatePath(robot) {
-            const path = [];
-            let current = { row: operator.row, col: operator.col };
-            const visited = new Set();
-            visited.add(`${current.row},${current.col}`);
-
-            while (current.row !== robot.row || current.col !== robot.col) {
+    // Updated path generation with more natural curves and independent paths
+    function generatePath(robot) {
+        const path = [];
+        let current = { row: operator.row, col: operator.col };
+        const visited = new Set();
+        visited.add(`${current.row},${current.col}`);
+        
+        // Add some randomness to the path direction preference
+        const directionBias = Math.random() > 0.5 ? 1 : -1;
+        
+        while (current.row !== robot.row || current.col !== robot.col) {
+            // Calculate direction to target
+            const rowDir = robot.row - current.row;
+            const colDir = robot.col - current.col;
+            
+            // Possible moves with some randomness
             const possibleMoves = [];
-            if (current.row < robot.row && current.row + 1 < gridRows) {
-              possibleMoves.push({ row: current.row + 1, col: current.col });
+            
+            // Always include the most direct move
+            if (rowDir !== 0) {
+                possibleMoves.push({
+                    row: current.row + Math.sign(rowDir),
+                    col: current.col
+                });
             }
-            if (current.row > robot.row && current.row - 1 >= 0) {
-              possibleMoves.push({ row: current.row - 1, col: current.col });
+            if (colDir !== 0) {
+                possibleMoves.push({
+                    row: current.row,
+                    col: current.col + Math.sign(colDir)
+                });
             }
-            if (current.col < robot.col && current.col + 1 < gridCols) {
-              possibleMoves.push({ row: current.row, col: current.col + 1 });
-            }
-            if (current.col > robot.col && current.col - 1 >= 0) {
-              possibleMoves.push({ row: current.row, col: current.col - 1 });
-            }
-
-            if (possibleMoves.length > 0) {
-              let bestMove = null;
-              let bestDistance = Infinity;
-
-              for (let i = 0; i < possibleMoves.length; i++) {
-              const move = possibleMoves[i];
-              const cellKey = `${move.row},${move.col}`;
-              if (!visited.has(cellKey)) {
-                let distance = Math.abs(move.row - robot.row) + Math.abs(move.col - robot.col);
-                if (distance < bestDistance) {
-                bestDistance = distance;
-                bestMove = move;
+            
+            // Add some diagonal moves for curves
+            if (Math.random() > 0.7) { // 30% chance of diagonal move
+                if (rowDir !== 0 && colDir !== 0) {
+                    possibleMoves.push({
+                        row: current.row + Math.sign(rowDir),
+                        col: current.col + Math.sign(colDir) * directionBias
+                    });
                 }
-              }
-              }
-
-              if (bestMove) {
-              current = bestMove;
-              visited.add(`${current.row},${current.col}`);
-              } else {
-              break;
-              }
+            }
+            
+            // Filter out invalid moves
+            const validMoves = possibleMoves.filter(move => 
+                move.row >= 0 && move.row < gridRows &&
+                move.col >= 0 && move.col < gridCols &&
+                !visited.has(`${move.row},${move.col}`)
+            );
+            
+            if (validMoves.length > 0) {
+                // Sort moves by distance to target (with some randomness)
+                validMoves.sort((a, b) => {
+                    const distA = Math.abs(a.row - robot.row) + Math.abs(a.col - robot.col);
+                    const distB = Math.abs(b.row - robot.row) + Math.abs(b.col - robot.col);
+                    // Add some randomness to path selection
+                    return (distA + (Math.random() * 2 - 1)) - (distB + (Math.random() * 2 - 1));
+                });
+                
+                // Choose the best move (with some randomness)
+                const chosenIndex = Math.random() > 0.8 ? 
+                    Math.floor(Math.random() * validMoves.length) : 0;
+                current = validMoves[chosenIndex];
+                visited.add(`${current.row},${current.col}`);
+                path.push({ row: current.row, col: current.col });
             } else {
-              break;
+                // If no valid moves, try to find an alternative path
+                const alternativeMoves = [];
+                if (current.row > 0) alternativeMoves.push({ row: current.row - 1, col: current.col });
+                if (current.row < gridRows - 1) alternativeMoves.push({ row: current.row + 1, col: current.col });
+                if (current.col > 0) alternativeMoves.push({ row: current.row, col: current.col - 1 });
+                if (current.col < gridCols - 1) alternativeMoves.push({ row: current.row, col: current.col + 1 });
+                
+                const validAlternatives = alternativeMoves.filter(move => 
+                    !visited.has(`${move.row},${move.col}`)
+                );
+                
+                if (validAlternatives.length > 0) {
+                    current = validAlternatives[Math.floor(Math.random() * validAlternatives.length)];
+                    visited.add(`${current.row},${current.col}`);
+                    path.push({ row: current.row, col: current.col });
+                } else {
+                    break; // No possible moves
+                }
             }
-            path.push({ row: current.row, col: current.col });
-            }
-            return path;
-          }
+        }
+        
+        return path;
+    }
 
-          // Draw connector path
-          function drawConnectorPath() {
-              robots.forEach(robot => {
-                  const path = generatePath(robot);
-                  if (path.length > 0) {
-                      ctx.beginPath();
-                      ctx.moveTo(operator.x, operator.y);
-                      path.forEach(cell => {
-                          const x = (cell.col + 0.5) * cellWidth;
-                          const y = (cell.row + 0.5) * cellHeight;
-                          ctx.lineTo(x, y);
-                      });
-                      ctx.strokeStyle = 'black';
-                      ctx.lineWidth = 3;
-                      ctx.stroke();
-                  } else {
-                      ctx.beginPath();
-                      ctx.moveTo(operator.x, operator.y);
-                      ctx.lineTo(robot.x, robot.y);
-                      ctx.strokeStyle = 'black';
-                      ctx.lineWidth = 3;
-                      ctx.stroke();
-                  }
-              });
-          }
+    // Updated drawConnectorPath with smooth curves
+    function drawConnectorPath() {
+        robots.forEach(robot => {
+            const path = generatePath(robot);
+            if (path.length > 0) {
+                ctx.beginPath();
+                ctx.moveTo(operator.x, operator.y);
+                
+                // Draw smooth curve through the points
+                for (let i = 0; i < path.length; i++) {
+                    const cell = path[i];
+                    const x = (cell.col + 0.5) * cellWidth;
+                    const y = (cell.row + 0.5) * cellHeight;
+                    
+                    if (i === 0 || i === path.length - 1) {
+                        ctx.lineTo(x, y);
+                    } else {
+                        // Create control points for curves
+                        const prevCell = path[i-1];
+                        const nextCell = path[i+1] || path[i];
+                        
+                        const cp1x = (prevCell.col + 0.5) * cellWidth;
+                        const cp1y = (prevCell.row + 0.5) * cellHeight;
+                        const cp2x = (nextCell.col + 0.5) * cellWidth;
+                        const cp2y = (nextCell.row + 0.5) * cellHeight;
+                        
+                        // Draw quadratic curve
+                        ctx.quadraticCurveTo(
+                            (cp1x + x) / 2, 
+                            (cp1y + y) / 2,
+                            x, y
+                        );
+                    }
+                }
+                
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            } else {
+                // Fallback to straight line if no path
+                ctx.beginPath();
+                ctx.moveTo(operator.x, operator.y);
+                ctx.lineTo(robot.x, robot.y);
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            }
+        });
+    }
 
           // Update the legend to include consequence information
           const legendDiv = document.querySelector('[style*="position: absolute; bottom: 10px; left: 10px;"]');
