@@ -450,15 +450,75 @@
           });
           document.body.appendChild(tooltip);
 
-          // Calculate weighted scores for consequences
-          function calculateWeightedScore(consequences) {
-              return {
-                  C1: (consequences.C1 * (1 + 1)) / 100,   // Easy nav (1) + Low exposure (1)
-                  C2: (consequences.C2 * (0.1 + 1)) / 100, // Hard nav (0.1) + Low exposure (1)
-                  C3: (consequences.C3 * (1 + 0.1)) / 100, // Easy nav (1) + High exposure (0.1)
-                  C4: (consequences.C4 * (0.1 + 0.1)) / 100 // Hard nav (0.1) + High exposure (0.1)
-              };
-          }
+        // ======= DISTANCE-BASED SAFETY FUNCTION =======
+        function computeSafetyLevel(operatorPosition, robotPositions, maxRadius = maxEffectiveRadius) {
+            let totalContribution = 0;
+
+            for (const robot of robotPositions) {
+                const dx = robot.x - operatorPosition.x;
+                const dy = robot.y - operatorPosition.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                // Normalize contribution: closer robots contribute more to safety
+                const contribution = Math.max(0, 1 - distance / maxRadius);
+                totalContribution += contribution;
+            }
+
+            // Normalize across 3 robots, so a_safety(t) ∈ [0, 1]
+            return Math.min(1, totalContribution / robotPositions.length);
+        }
+
+
+        // ======= SAFETY NEED UPDATE FUNCTION (Equation 7 from DFT) =======
+        function updateSafetyNeedWeight(n_safety, g_safety, a_safety, L_safety) {
+            return L_safety * n_safety + (g_safety - a_safety);
+        }
+
+
+        // ======= EXAMPLE INTEGRATION FLOW =======
+        function updateSafetyNeedAndScores(operatorPosition, robotPositions, consequences, attributeQualities) {
+            // Step 1: Compute a_safety(t) based on robot proximity
+            const a_safety = computeSafetyLevel(operatorPosition, robotPositions);
+
+            // Step 2: Update n_k(t+h) based on the safety evaluation
+            n_safety = updateSafetyNeedWeight(n_safety, g_safety, a_safety, L_safety);
+
+            // Step 3: Use updated n_safety to scale the exposure attribute (need for safety)
+            const needWeights = {
+                navigation: 1.0,     // Static: navigation difficulty remains fixed
+                exposure: n_safety   // Dynamic: exposure weight based on safety need
+            };
+
+            // Step 4: Compute weighted scores m_j(t) for each consequence (C1, C2, C3, C4)
+            return calculateWeightedScore(consequences, needWeights, attributeQualities);
+        }
+
+
+        // ======= STATIC STRUCTURES EXAMPLE =======
+        const attributeQualities = {
+            C1: { navigation: 1.0, exposure: 1.0 },   // Easy nav, Low exposure
+            C2: { navigation: 0.1, exposure: 1.0 },   // Hard nav, Low exposure
+            C3: { navigation: 1.0, exposure: 0.1 },   // Easy nav, High exposure
+            C4: { navigation: 0.1, exposure: 0.1 }    // Hard nav, High exposure
+        };
+
+        // Function to calculate weighted scores for each consequence
+        function calculateWeightedScore(consequences, needWeights, attributeQualities) {
+            const scores = {};
+
+            for (const [consequence, value] of Object.entries(consequences)) {
+                const q = attributeQualities[consequence];
+                const m_j = (needWeights.navigation * q.navigation) +
+                            (needWeights.exposure * q.exposure);
+
+                // Final weighted score for this consequence
+                scores[consequence] = (value * m_j) / 100;
+            }
+
+            return scores;
+        }
+
+
 
           // Handle mouse movement for tooltip
           canvas.addEventListener('mousemove', function(evt) {

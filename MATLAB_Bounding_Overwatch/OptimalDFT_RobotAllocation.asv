@@ -1,0 +1,85 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Simulation Setup:
+%
+% This script reads  data from robot allocation experiment as CSV file.
+% This then references python bridge to apollo to estimate static
+% parameters for dataset. Using the parameters, we formulate DFT Preference
+% dynamic and determine, E(P), V(P), with respect to robot states (x_i). We
+% then reference 'solve_equilibrium' function to predict human choice for
+% component produced.
+%
+% - The autonomous agents are responsible for producing component types 1 and 2;
+% - The human agents are responsible for producing component types 3 and 4.
+%
+% At each macro-level time step τ, the human preference state P_tau evolves 
+% slowly over time and is modeled internally using Decision Field Theory (DFT).
+% At a given τ, we assume the following human response statistics are available:
+%
+%   - E[y_k] = r_k(P_{kc,τ}), representing the expected behavioral response
+%     of the human agent based on their internal preference state;
+%   - Var[y_k] = σ_k², representing the uncertainty in the human response.
+%
+% During the continuous-time interval from τ to τ+1, we assume P_tau remains 
+% fixed—that is, human preferences do not change during this interval.
+%
+% Under this setting, we simulate the optimization process of the autonomous 
+% agents over [τ, τ+1], during which they continuously update their production 
+% states x_i to respond to uncertain human feedback and achieve optimal 
+% resource allocation across the system.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% Step 1: Import CSV Data
+biasData = readtable('user_choices.csv'); % Replace with the path to your data file
+disp('User bias data imported successfully.');
+taskChoice_Data = readtable('user_choices.csv'); % Replace with the path to your data file
+disp('User task choice data imported successfully.');
+robotChoice_Data = readtable('user_choices.csv'); % Replace with the path to your data file
+disp('User robot choice data imported successfully.');
+
+% Extract relevant data (modify based on your CSV structure)
+robot_states = data{:, {'energy', 'pace', 'safety', 'reliability', 'computational_load'}};
+task_attributes = data{:, {'efficiency', 'speed', 'safety', 'durability', 'skill'}};
+
+% Step 2: Python Bridge to Apollo for Parameter Estimation
+disp('Initializing Python bridge to Apollo...');
+py.importlib.import_module('apollo_bridge'); % Import the Apollo Python script
+
+% Prepare data for Python
+csv_file_path = 'user_choices.csv'; % Path to the same CSV file
+params = py.apollo_bridge.estimate_parameters(csv_file_path); % Call Apollo estimation function
+disp('Static parameters estimated:');
+disp(params);
+
+% Extract returned parameters (ensure consistent format)
+phi1 = double(params{1});
+phi2 = double(params{2});
+tau = double(params{3});
+error = double(params{4});
+
+% Step 3: MDFT Formulation to Calculate Preference Dynamics
+% (Add your MDFT calculations based on estimated parameters)
+disp('Calculating preference dynamics using MDFT...');
+% Example placeholders
+P =  % Replace with MDFT formulation
+
+% Step 4: Solve Equilibrium Function
+disp('Solving equilibrium...');
+Ep_mins = min(P, [], 2); % Example: min expected preferences
+Varp_mins = var(P, 0, 2); % Example: variance of preferences
+x_mins = mean(robot_states, 2); % Example: mean robot state inputs
+
+% Call your solve_equilibrium function
+[P_final, E_P, V_P] = solve_equilibrium(Ep_mins, Varp_mins, x_mins);
+
+disp('Results:');
+disp(['Final Preference Dynamics (P): ', num2str(P_final)]);
+disp(['Expected Preference (E(P)): ', num2str(E_P)]);
+disp(['Preference Variance (V(P)): ', num2str(V_P)]);
+
+% Step 5: Output Results
+disp('Saving results to CSV...');
+output_table = table(E_P, V_P, P_final, ...
+                     'VariableNames', {'ExpectedPreference', 'VariancePreference', 'FinalPreferences'});
+writetable(output_table, 'results.csv');
+disp('Results saved successfully!');
