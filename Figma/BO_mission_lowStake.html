@@ -1,0 +1,743 @@
+<!-- Main container for the Mission Start Page -->
+<div style="width: 100%; height: 100%; position: relative; background: white; overflow: hidden">
+    
+    <!-- Header section containing navigation tabs and quit button -->
+    <div style="width: 1440px; height: 94px; padding-left: 100px; padding-right: 100px; left: 0px; top: 0px; position: absolute; justify-content: space-between; align-items: center; display: inline-flex">
+        
+        <!-- Navigation tabs -->
+        <div style="justify-content: flex-start; align-items: flex-start; gap: 52px; display: flex">
+            <!-- Home tab -->
+            <a href="BO_home_page.html" data-layer="Tab menu" data-status="Off" class="TabMenu" style="padding-bottom: 4px; justify-content: flex-start; align-items: flex-start; gap: 10px; display: flex">
+                <div data-layer="Home" class="Home" style="color: #333333; font-size: 20px; font-family: Sarabun; font-weight: 400; line-height: 32px; word-wrap: break-word">Home</div>
+            </a>
+            <!-- Background tab -->
+            <a href="BO_background_page.html" data-layer="Tab menu" data-status="Off" class="TabMenu" style="padding-bottom: 4px; justify-content: flex-start; align-items: flex-start; gap: 10px; display: flex">
+                <div data-layer="Background" class="Background" style="color: #333333; font-size: 20px; font-family: Sarabun; font-weight: 400; line-height: 32px; word-wrap: break-word">Background</div>
+            </a>
+             <!-- About Us tab -->
+            <a href="https://www.clemson.edu/cecas/departments/me/research/labs/i2r.html" data-layer="Tab menu" data-status="Off" class="TabMenu" style="padding-bottom: 4px; justify-content: flex-start; align-items: flex-start; gap: 10px; display: flex">
+                <div data-layer="Tab menu" class="TabMenu" style="color: #333333; font-size: 20px; font-family: Sarabun; font-weight: 400; line-height: 32px; word-wrap: break-word">About Us</div>
+            </a>
+            <!-- Tracker link -->
+            <div data-status="Off" style="padding-bottom: 4px; justify-content: flex-start; align-items: flex-start; gap: 10px; display: flex">
+                <div id="tracker" style="color: #333333; font-size: 20px; font-family: Sarabun; font-weight: 400; line-height: 32px; word-wrap: break-word">Tracker: 1/30</div>
+            </div>
+        </div>
+        
+        <!-- Quit button -->
+        <a href="BO_end_page.html" data-layer="Quit-Button" class="QuitButton" style="width: 129px; height: 54px; padding-left: 24px; padding-right: 24px; background: rgba(246.50, 31.84, 31.84, 0.77); border-radius: 32px; justify-content: center; align-items: center; gap: 8px; display: flex">
+            <div data-layer="Quit" class="Quit" style="flex-direction: column; justify-content: center; align-items: center; display: inline-flex">
+            <div data-layer="Text Detail" class="TextDetail" style="justify-content: flex-start; align-items: flex-start; gap: 8px; display: inline-flex">
+                <div data-layer="Primary Button" class="PrimaryButton" style="color: #FAEEEE; font-size: 16px; font-family: Sarabun; font-weight: 700; line-height: 24px; word-wrap: break-word">Quit</div>
+            </div>
+            </div>
+        </a>
+    </div>
+    
+    <!-- Body section containing interactive and static sections -->
+    <div style="width: 1440px; height: 1024px; left: 0px; top: 94px; position: absolute">
+        
+        <!-- Interactive section with path selection and buttons -->
+        <div style="width: 608px; height: 1024px; left: 732px; top: 0px; position: absolute">
+            <div style="width: 1036px; height: 1024px; left: -327px; top: 0px; position: absolute; background: rgba(51, 50, 31, 0.49)"></div>
+            <div style="width: 555px; left: 84px; top: 338px; position: absolute; color: #FFFBFB; font-size: 28px; font-family: Sarabun; font-weight: 700; line-height: 45px; word-wrap: break-word">Which of the following robot path do you prefer to follow?</div>
+            
+        <!-- Robot selection options -->
+              <style>
+                input[type="radio"] {
+                  width: 24px;
+                  height: 24px;
+                  appearance: none;
+                  outline: 1.50px #1B3360 solid;
+                  border-radius: 50%;
+                  position: relative;
+                  cursor: pointer;
+                }
+
+                input[type="radio"]:checked {
+                  background-color: #1B3360; /* Solid color when checked */
+                  border: none; /* Remove the border when checked */
+                }
+
+              </style>
+              <div style="left: 84px; top: 643px; position: absolute;">
+                <label style="display: flex; justify-content: flex-start; align-items: center; gap: 10px; cursor: pointer;">
+                  <input type="radio" name="robot" value="robot3"/>
+                  <div style="color: white; font-size: 24px; font-family: Sarabun; font-weight: 400; line-height: 24px; word-wrap: break-word">Robot 3</div>
+                </label>
+              </div>
+              <div style="left: 84px; top: 559px; position: absolute;">
+                <label style="display: flex; justify-content: flex-start; align-items: center; gap: 10px; cursor: pointer;">
+                  <input type="radio" name="robot" value="robot2"/>
+                  <div style="color: white; font-size: 24px; font-family: Sarabun; font-weight: 400; line-height: 24px; word-wrap: break-word">Robot 2</div>
+                </label>
+              </div>
+              <div style="left: 84px; top: 488px; position: absolute;">
+                <label style="display: flex; justify-content: flex-start; align-items: center; gap: 10px; cursor: pointer;">
+                  <input type="radio" name="robot" value="robot1"/>
+                  <div style="color: white; font-size: 24px; font-family: Sarabun; font-weight: 400; line-height: 24px; word-wrap: break-word">Robot 1</div>
+                </label>
+              </div>
+            
+            <!-- Next button -->
+            <a href="BO_mission_start.html" style="text-decoration: none;" class="next-button">
+              <div style="width: 181px; height: 54px; padding-left: 24px; padding-right: 24px; left: 361px; top: 754px; position: absolute; background: #1B6048; border-radius: 32px; flex-direction: column; justify-content: center; align-items: center; display: inline-flex">
+                <div style="flex-direction: column; justify-content: center; align-items: center; display: flex">
+                  <div style="justify-content: flex-start; align-items: flex-start; gap: 8px; display: inline-flex">
+                    <div style="color: white; font-size: 16px; font-family: Sarabun; font-weight: 700; line-height: 24px; word-wrap: break-word">Next</div>
+                  </div>
+                </div>
+              </div>
+            </a>
+            <!-- Switch button -->
+        <a href="BO_home_page.html" style="text-decoration: none;" id="switchButton">
+            <div style="width: 181px; height: 54px; padding-left: 24px; padding-right: 24px; left: 100px; top: 754px; position: absolute; background: #1B3360; border-radius: 32px; flex-direction: column; justify-content: center; align-items: center; display: inline-flex">
+              <div style="flex-direction: column; justify-content: center; align-items: center; display: flex">
+          <div style="justify-content: flex-start; align-items: flex-start; gap: 8px; display: inline-flex">
+            <div style="color: white; font-size: 16px; font-family: Sarabun; font-weight: 700; line-height: 24px; word-wrap: break-word">Switch</div>
+          </div>
+              </div>
+            </div>
+        </a>
+      </div>
+        
+        <!-- Static section with image and dynamic robot/path overlays -->
+        <div style="width: 659px; height: 870px; left: 100px; top: 77px; position: absolute; box-shadow: 0px 6px 40px rgba(56.52, 119.95, 178.50, 0.08); border-radius: 24px; overflow: hidden;">
+            <div style="width: 659px; height: 870px; position: absolute; background: #D9D9D9; border-radius: 24px"></div>
+            <img id="canyonImage" style="width: 659px; height: 870px; position: absolute;" src="" />
+            <canvas id="overlayCanvas" width="659" height="870" style="position: absolute; top: 0; left: 0;"></canvas>
+            <!-- New legend overlay -->
+            <div style="position: absolute; bottom: 10px; left: 10px; z-index: 10; background: rgba(255,255,255,0.8); padding: 5px; border-radius: 5px; font-size: 14px;">
+                <div><span style="display:inline-block; width: 12px; height: 12px; background-color: red; margin-right: 5px;"></span>Operator</div>
+                <div><span style="display:inline-block; width: 12px; height: 12px; background-color: blue; margin-right: 5px;"></span>Robot</div>
+                <div><span style="display:inline-block; width: 12px; height: 12px; background-color: black; margin-right: 5px;"></span>Connector Path</div>
+                <div><span style="display:inline-block; width: 12px; height: 12px; background-color: rgba(255, 0, 0, 0.1); margin-right: 5px;"></span>Overlay (Red)</div>
+                <div><span style="display:inline-block; width: 12px; height: 12px; background-color: rgba(255, 255, 0, 0.1); margin-right: 5px;"></span>Overlay (Yellow)</div>
+                <div><span style="display:inline-block; width: 12px; height: 12px; background-color: rgba(0, 255, 0, 0.1); margin-right: 5px;"></span>Overlay (Green)</div>
+            </div>
+        </div>
+
+      <script>
+          const canvas = document.getElementById('overlayCanvas');
+          const ctx = canvas.getContext('2d');
+          const canvasWidth = canvas.width;
+          const canvasHeight = canvas.height;
+          const gridCols = 20;
+          const gridRows = 20;
+          const cellWidth = canvasWidth / gridCols;
+          const cellHeight = canvasHeight / gridRows;
+          let gridMap = [];
+          let robots = [];
+
+          // Define operator marker at bottom center of the grid
+          const operator = {
+            row: gridRows - 1,
+            col: Math.floor(gridCols / 2),
+            get x() { return (this.col + 0.5) * cellWidth; },
+            get y() { return (this.row + 0.5) * cellHeight; }
+          };
+
+          // Create a grid map with open (true) or obstructed (false) cells
+          function generateMap() {
+            gridMap = [];
+            for (let r = 0; r < gridRows; r++) {
+              let row = [];
+              for (let c = 0; c < gridCols; c++) {
+                row.push(Math.random() < 0.5);
+              }
+              gridMap.push(row);
+            }
+          }
+
+          // Calculate visibility of cells
+          function calculateVisibility() {
+            const visibilityMap = Array.from({ length: gridRows }, () =>
+              Array(gridCols).fill(false)
+            );
+
+            const visibilityRadius = 5;
+
+            robots.forEach(robot => {
+              for (let r = -visibilityRadius; r <= visibilityRadius; r++) {
+                for (let c = -visibilityRadius; c <= visibilityRadius; c++) {
+                  const row = robot.row + r;
+                  const col = robot.col + c;
+                  if (
+                    row >= 0 &&
+                    row < gridRows &&
+                    col >= 0 &&
+                    col < gridCols &&
+                    Math.sqrt(r * r + c * c) <= visibilityRadius
+                  ) {
+                    visibilityMap[row][col] = true;
+                  }
+                }
+              }
+            });
+
+            let current = { row: operator.row, col: operator.col };
+            while (current.row >= 0) {
+              visibilityMap[current.row][current.col] = true;
+              current.row--;
+            }
+
+            return visibilityMap;
+          }
+
+          // Draw the map overlay
+          function drawMap() {
+            const visibilityMap = calculateVisibility();
+
+            for (let r = 0; r < gridRows; r++) {
+              for (let c = 0; c < gridCols; c++) {
+                if (!visibilityMap[r][c]) {
+                  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                  ctx.fillRect(c * cellWidth, r * cellHeight, cellWidth, cellHeight);
+                }
+              }
+            }
+          }
+
+          // Get all open cells from the grid
+          function getOpenCells() {
+            const openCells = [];
+            for (let r = 0; r < gridRows; r++) {
+              for (let c = 0; c < gridCols; c++) {
+                if (gridMap[r][c]) {
+                  openCells.push({ row: r, col: c });
+                }
+              }
+            }
+            return openCells;
+          }
+
+          // Generate consequences for each robot
+          function generateConsequences() {
+              let percents = [];
+              for (let i = 0; i < 4; i++) {
+                  percents.push(Math.random());
+              }
+              const sum = percents.reduce((a, b) => a + b, 0);
+              return {
+                  C1: Math.round((percents[0]/sum)*100),
+                  C2: Math.round((percents[1]/sum)*100),
+                  C3: Math.round((percents[2]/sum)*100),
+                  C4: Math.round((percents[3]/sum)*100)
+              };
+          }
+
+          // Place robots with consequences
+          function generateRobots(numRobots) {
+              const openCells = getOpenCells();
+              robots = [];
+              for (let i = 0; i < numRobots && openCells.length; i++) {
+                  const index = Math.floor(Math.random() * openCells.length);
+                  const cell = openCells.splice(index, 1)[0];
+                  const x = (cell.col + 0.5) * cellWidth;
+                  const y = (cell.row + 0.5) * cellHeight;
+                  robots.push({
+                      x,
+                      y,
+                      row: cell.row,
+                      col: cell.col,
+                      consequences: generateConsequences()
+                  });
+              }
+          }
+
+          // Draw robots as triangles
+          function drawRobots() {
+            robots.forEach(robot => {
+              ctx.beginPath();
+              ctx.moveTo(robot.x, robot.y - 10);
+              ctx.lineTo(robot.x + 10, robot.y + 10);
+              ctx.lineTo(robot.x - 10, robot.y + 10);
+              ctx.closePath();
+              ctx.fillStyle = 'blue';
+              ctx.fill();
+            });
+          }
+
+          // Draw the operator marker
+          function drawOperator() {
+            ctx.beginPath();
+            ctx.arc(operator.x, operator.y, 10, 0, 2 * Math.PI);
+            ctx.fillStyle = 'red';
+            ctx.fill();
+          }
+
+          // Overlay cells with random colors
+          function overlayRandomCells() {
+              const colors = ['rgba(255, 0, 0, 0.1)', 'rgba(255, 255, 0, 0.1)', 'rgba(0, 255, 0, 0.1)'];
+              for (let r = 0; r < gridRows; r++) {
+                  for (let c = 0; c < gridCols; c++) {
+                      const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                      ctx.fillStyle = randomColor;
+                      ctx.fillRect(c * cellWidth, r * cellHeight, cellWidth, cellHeight);
+                  }
+              }
+          }
+
+    // Updated path generation with more natural curves and independent paths
+    function generatePath(robot) {
+        const path = [];
+        let current = { row: operator.row, col: operator.col };
+        const visited = new Set();
+        visited.add(`${current.row},${current.col}`);
+        
+        // Add some randomness to the path direction preference
+        const directionBias = Math.random() > 0.5 ? 1 : -1;
+        
+        while (current.row !== robot.row || current.col !== robot.col) {
+            // Calculate direction to target
+            const rowDir = robot.row - current.row;
+            const colDir = robot.col - current.col;
+            
+            // Possible moves with some randomness
+            const possibleMoves = [];
+            
+            // Always include the most direct move
+            if (rowDir !== 0) {
+                possibleMoves.push({
+                    row: current.row + Math.sign(rowDir),
+                    col: current.col
+                });
+            }
+            if (colDir !== 0) {
+                possibleMoves.push({
+                    row: current.row,
+                    col: current.col + Math.sign(colDir)
+                });
+            }
+            
+            // Add some diagonal moves for curves
+            if (Math.random() > 0.7) { // 30% chance of diagonal move
+                if (rowDir !== 0 && colDir !== 0) {
+                    possibleMoves.push({
+                        row: current.row + Math.sign(rowDir),
+                        col: current.col + Math.sign(colDir) * directionBias
+                    });
+                }
+            }
+            
+            // Filter out invalid moves
+            const validMoves = possibleMoves.filter(move => 
+                move.row >= 0 && move.row < gridRows &&
+                move.col >= 0 && move.col < gridCols &&
+                !visited.has(`${move.row},${move.col}`)
+            );
+            
+            if (validMoves.length > 0) {
+                // Sort moves by distance to target (with some randomness)
+                validMoves.sort((a, b) => {
+                    const distA = Math.abs(a.row - robot.row) + Math.abs(a.col - robot.col);
+                    const distB = Math.abs(b.row - robot.row) + Math.abs(b.col - robot.col);
+                    // Add some randomness to path selection
+                    return (distA + (Math.random() * 2 - 1)) - (distB + (Math.random() * 2 - 1));
+                });
+                
+                // Choose the best move (with some randomness)
+                const chosenIndex = Math.random() > 0.8 ? 
+                    Math.floor(Math.random() * validMoves.length) : 0;
+                current = validMoves[chosenIndex];
+                visited.add(`${current.row},${current.col}`);
+                path.push({ row: current.row, col: current.col });
+            } else {
+                // If no valid moves, try to find an alternative path
+                const alternativeMoves = [];
+                if (current.row > 0) alternativeMoves.push({ row: current.row - 1, col: current.col });
+                if (current.row < gridRows - 1) alternativeMoves.push({ row: current.row + 1, col: current.col });
+                if (current.col > 0) alternativeMoves.push({ row: current.row, col: current.col - 1 });
+                if (current.col < gridCols - 1) alternativeMoves.push({ row: current.row, col: current.col + 1 });
+                
+                const validAlternatives = alternativeMoves.filter(move => 
+                    !visited.has(`${move.row},${move.col}`)
+                );
+                
+                if (validAlternatives.length > 0) {
+                    current = validAlternatives[Math.floor(Math.random() * validAlternatives.length)];
+                    visited.add(`${current.row},${current.col}`);
+                    path.push({ row: current.row, col: current.col });
+                } else {
+                    break; // No possible moves
+                }
+            }
+        }
+        
+        return path;
+    }
+
+    // Updated drawConnectorPath with smooth curves
+    function drawConnectorPath() {
+        robots.forEach(robot => {
+            const path = generatePath(robot);
+            if (path.length > 0) {
+                ctx.beginPath();
+                ctx.moveTo(operator.x, operator.y);
+                
+                // Draw smooth curve through the points
+                for (let i = 0; i < path.length; i++) {
+                    const cell = path[i];
+                    const x = (cell.col + 0.5) * cellWidth;
+                    const y = (cell.row + 0.5) * cellHeight;
+                    
+                    if (i === 0 || i === path.length - 1) {
+                        ctx.lineTo(x, y);
+                    } else {
+                        // Create control points for curves
+                        const prevCell = path[i-1];
+                        const nextCell = path[i+1] || path[i];
+                        
+                        const cp1x = (prevCell.col + 0.5) * cellWidth;
+                        const cp1y = (prevCell.row + 0.5) * cellHeight;
+                        const cp2x = (nextCell.col + 0.5) * cellWidth;
+                        const cp2y = (nextCell.row + 0.5) * cellHeight;
+                        
+                        // Draw quadratic curve
+                        ctx.quadraticCurveTo(
+                            (cp1x + x) / 2, 
+                            (cp1y + y) / 2,
+                            x, y
+                        );
+                    }
+                }
+                
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            } else {
+                // Fallback to straight line if no path
+                ctx.beginPath();
+                ctx.moveTo(operator.x, operator.y);
+                ctx.lineTo(robot.x, robot.y);
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            }
+        });
+    }
+
+          // Update the legend to include consequence information
+          const legendDiv = document.querySelector('[style*="position: absolute; bottom: 10px; left: 10px;"]');
+          legendDiv.innerHTML = `
+              <div><span style="display:inline-block; width: 12px; height: 12px; background-color: red; margin-right: 5px;"></span>Operator</div>
+              <div><span style="display:inline-block; width: 12px; height: 12px; background-color: blue; margin-right: 5px;"></span>Robot</div>
+              <div><span style="display:inline-block; width: 12px; height: 12px; background-color: black; margin-right: 5px;"></span>Connector Path</div>
+              <div style="margin-top: 10px;"><b>Consequence Types:</b></div>
+              <div><span style="display:inline-block; width: 12px; height: 12px; background-color: rgba(255, 0, 0, 0.1); margin-right: 5px;"></span>C1: Easy nav (1) + Low exposure (1)</div>
+              <div><span style="display:inline-block; width: 12px; height: 12px; background-color: rgba(255, 255, 0, 0.1); margin-right: 5px;"></span>C2: Hard nav (0.1) + Low exposure (1)</div>
+              <div><span style="display:inline-block; width: 12px; height: 12px; background-color: rgba(0, 255, 0, 0.1); margin-right: 5px;"></span>C3: Easy nav (1) + High exposure (0.1)</div>
+              <div><span style="display:inline-block; width: 12px; height: 12px; background-color: rgba(0, 0, 255, 0.1); margin-right: 5px;"></span>C4: Hard nav (0.1) + High exposure (0.1)</div>
+          `;
+
+          // Create tooltip
+          const tooltip = document.createElement('div');
+          tooltip.id = 'robotTooltip';
+          Object.assign(tooltip.style, {
+              position: 'absolute',
+              zIndex: '1000',
+              background: 'rgba(255,255,255,0.95)',
+              padding: '8px 12px',
+              border: '1px solid #ccc',
+              borderRadius: '6px',
+              fontFamily: 'Sarabun, sans-serif',
+              fontSize: '14px',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
+              minWidth: '150px',
+              pointerEvents: 'none',
+              display: 'none',
+              transition: 'opacity 0.2s ease'
+          });
+          document.body.appendChild(tooltip);
+
+        // ======= DISTANCE-BASED SAFETY FUNCTION =======
+        function computeSafetyLevel(operatorPosition, robotPositions, maxRadius = maxEffectiveRadius) {
+            let totalContribution = 0;
+
+            for (const robot of robotPositions) {
+                const dx = robot.x - operatorPosition.x;
+                const dy = robot.y - operatorPosition.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                // Normalize contribution: closer robots contribute more to safety
+                const contribution = Math.max(0, 1 - distance / maxRadius);
+                totalContribution += contribution;
+            }
+
+            // Normalize across 3 robots, so a_safety(t) ∈ [0, 1]
+            return Math.min(1, totalContribution / robotPositions.length);
+        }
+
+
+        // ======= SAFETY NEED UPDATE FUNCTION (Equation 7 from DFT) =======
+        function updateSafetyNeedWeight(n_safety, g_safety, a_safety, L_safety) {
+            return L_safety * n_safety + (g_safety - a_safety);
+        }
+
+
+        // ======= EXAMPLE INTEGRATION FLOW =======
+        function updateSafetyNeedAndScores(operatorPosition, robotPositions, consequences, attributeQualities) {
+            // Step 1: Compute a_safety(t) based on robot proximity
+            const a_safety = computeSafetyLevel(operatorPosition, robotPositions);
+
+            // Step 2: Update n_k(t+h) based on the safety evaluation
+            n_safety = updateSafetyNeedWeight(n_safety, g_safety, a_safety, L_safety);
+
+            // Step 3: Use updated n_safety to scale the exposure attribute (need for safety)
+            const needWeights = {
+                navigation: 1.0,     // Static: navigation difficulty remains fixed
+                exposure: n_safety   // Dynamic: exposure weight based on safety need
+            };
+
+            // Step 4: Compute weighted scores m_j(t) for each consequence (C1, C2, C3, C4)
+            return calculateWeightedScore(consequences, needWeights, attributeQualities);
+        }
+
+
+        // ======= STATIC STRUCTURES EXAMPLE =======
+        const attributeQualities = {
+            C1: { navigation: 1.0, exposure: 1.0 },   // Easy nav, Low exposure
+            C2: { navigation: 0.1, exposure: 1.0 },   // Hard nav, Low exposure
+            C3: { navigation: 1.0, exposure: 0.1 },   // Easy nav, High exposure
+            C4: { navigation: 0.1, exposure: 0.1 }    // Hard nav, High exposure
+        };
+
+        // Function to calculate weighted scores for each consequence
+        function calculateWeightedScore(consequences, needWeights, attributeQualities) {
+            const scores = {};
+
+            for (const [consequence, value] of Object.entries(consequences)) {
+                const q = attributeQualities[consequence];
+                const m_j = (needWeights.navigation * q.navigation) +
+                            (needWeights.exposure * q.exposure);
+
+                // Final weighted score for this consequence
+                scores[consequence] = (value * m_j) / 100;
+            }
+
+            return scores;
+        }
+
+
+
+          // Handle mouse movement for tooltip
+          canvas.addEventListener('mousemove', function(evt) {
+              const rect = canvas.getBoundingClientRect();
+              const mouseX = evt.clientX - rect.left;
+              const mouseY = evt.clientY - rect.top;
+              
+              let closestRobot = null;
+              let minDistance = Infinity;
+              
+              robots.forEach((robot, index) => {
+                  const dx = mouseX - robot.x;
+                  const dy = mouseY - robot.y;
+                  const distance = Math.sqrt(dx * dx + dy * dy);
+                  
+                  if (distance < 20 && distance < minDistance) {
+                      minDistance = distance;
+                      closestRobot = { robot, index };
+                  }
+              });
+              
+              if (closestRobot) {
+                  const { robot, index } = closestRobot;
+                  
+                  tooltip.innerHTML = `
+                      <div style="font-weight:700;margin-bottom:4px;">Robot ${index + 1}</div>
+                      <div>C1: ${robot.consequences.C1}% (Easy/Low)</div>
+                      <div>C2: ${robot.consequences.C2}% (Hard/Low)</div>
+                      <div>C3: ${robot.consequences.C3}% (Easy/High)</div>
+                      <div>C4: ${robot.consequences.C4}% (Hard/High)</div>
+                  `;
+                  
+                  let tooltipX = robot.x + 20;
+                  let tooltipY = robot.y - tooltip.offsetHeight / 2;
+                  
+                  if (tooltipX + tooltip.offsetWidth > canvasWidth) {
+                      tooltipX = robot.x - tooltip.offsetWidth - 20;
+                  }
+                  
+                  if (tooltipY + tooltip.offsetHeight > canvasHeight) {
+                      tooltipY = canvasHeight - tooltip.offsetHeight - 10;
+                  }
+                  
+                  if (tooltipY < 10) {
+                      tooltipY = 10;
+                  }
+                  
+                  tooltip.style.left = `${rect.left + tooltipX}px`;
+                  tooltip.style.top = `${rect.top + tooltipY}px`;
+                  tooltip.style.display = 'block';
+              } else {
+                  tooltip.style.display = 'none';
+              }
+          });
+
+          canvas.addEventListener('mouseleave', function() {
+              tooltip.style.display = 'none';
+          });
+
+          function redrawCanvas() {
+              ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+              const canyonImage = document.getElementById('canyonImage');
+              ctx.drawImage(canyonImage, 0, 0, canvasWidth, canvasHeight);
+              drawMap();
+              overlayRandomCells();
+              drawConnectorPath();
+              drawOperator();
+              drawRobots();
+          }
+
+          let userResponses = [];
+          let trialID = 1;
+
+          function saveResponses() {
+              localStorage.setItem('userResponses', JSON.stringify(userResponses));
+          }
+
+          function loadResponses() {
+              const storedResponses = localStorage.getItem('userResponses');
+              if (storedResponses) {
+                  userResponses = JSON.parse(storedResponses);
+              } else {
+                  userResponses = [];
+              }
+          }
+
+          function getCount() {
+              let count = localStorage.getItem('count');
+              return count ? parseInt(count) : 1;
+          }
+
+          function setCount(count) {
+              localStorage.setItem('count', count);
+              document.getElementById('tracker').innerText = 'Tracker: ' + count + '/30';
+          }
+
+          let currentCount = getCount();
+          document.getElementById('tracker').innerText = 'Tracker: ' + currentCount + '/30';
+          
+          currentCount += 1;
+          setCount(currentCount);
+
+          loadResponses();
+
+          function recordResponse(choice, time, consequences) {
+              const robot1Scores = calculateWeightedScore(consequences[0]);
+              const robot2Scores = calculateWeightedScore(consequences[1]);
+              const robot3Scores = calculateWeightedScore(consequences[2]);
+              
+              userResponses.push({
+                  ID: trialID++,
+                  choice: parseInt(choice.replace('robot', '')),
+                  timeElapsed: time,
+                  C11: robot1Scores.C1,
+                  C12: robot1Scores.C2,
+                  C13: robot1Scores.C3,
+                  C14: robot1Scores.C4,
+                  C21: robot2Scores.C1,
+                  C22: robot2Scores.C2,
+                  C23: robot2Scores.C3,
+                  C24: robot2Scores.C4,
+                  C31: robot3Scores.C1,
+                  C32: robot3Scores.C2,
+                  C33: robot3Scores.C3,
+                  C34: robot3Scores.C4
+              });
+              saveResponses();
+          }
+
+          const radioButtons = document.querySelectorAll('input[type="radio"][name="robot"]');
+          radioButtons.forEach(radioButton => {
+              radioButton.addEventListener('change', function() {
+                  const startTime = performance.now();
+                  const choice = this.value;
+
+                  setTimeout(() => {
+                      const endTime = performance.now();
+                      const timeElapsed = endTime - startTime;
+                      const consequences = robots.map(robot => robot.consequences);
+                      recordResponse(choice, timeElapsed, consequences);
+                  }, 500);
+              });
+          });
+
+          function convertToCSV(responses) {
+              const header = "ID,choice,C11,C12,C13,C14,C21,C22,C23,C24,C31,C32,C33,C34,timeElapsed\n";
+              let csv = header;
+              
+              responses.forEach(response => {
+                  csv += [
+                      response.ID,
+                      response.choice,
+                      response.C11,
+                      response.C12,
+                      response.C13,
+                      response.C14,
+                      response.C21,
+                      response.C22,
+                      response.C23,
+                      response.C24,
+                      response.C31,
+                      response.C32,
+                      response.C33,
+                      response.C34,
+                      response.timeElapsed
+                  ].join(',') + '\n';
+              });
+              
+              return csv;
+          }
+
+          function downloadCSV(csv, filename) {
+              const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = filename || 'user_responses.csv';
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+          }
+
+          const nextButton = document.querySelector('.next-button');
+          nextButton.addEventListener('click', function(event) {
+              event.preventDefault();
+              
+              const selectedRobot = document.querySelector('input[name="robot"]:checked');
+              if (!selectedRobot) {
+                  alert('Please select a robot path before continuing');
+                  return;
+              }
+              
+              let currentCount = getCount();
+              
+              if (currentCount >= 30) {
+                  if (userResponses.length > 0) {
+                      const csvData = convertToCSV(userResponses);
+                      const now = new Date();
+                      const dateString = now.toISOString().slice(0, 10);
+                      const timeString = now.toTimeString().slice(0, 8).replace(/:/g, '');
+                      const filename = `${dateString}-${timeString}-${trialID - 1}-Bounding_Overwatch.csv`;
+                      
+                      downloadCSV(csvData, filename);
+                      localStorage.removeItem('userResponses');
+                      userResponses = [];
+                  }
+                  
+                  setCount(1);
+                  window.location.href = "BO_home_page.html";
+              } else {
+                  window.location.href = "BO_mission_start.html";
+              }
+          });
+
+          window.onload = function() {
+              generateMap();
+              generateRobots(3);
+              redrawCanvas();
+          };
+      </script>
+    </div>
+</div>
