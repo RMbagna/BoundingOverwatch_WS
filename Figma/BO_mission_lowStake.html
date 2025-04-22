@@ -162,6 +162,20 @@
         };
 
         // ========== INITIALIZATION FUNCTIONS ==========
+        // Update window.onload in all pages to:
+        window.onload = function() {
+            // Initialize or get session ID
+            if (!localStorage.getItem('sessionID')) {
+                localStorage.setItem('sessionID', generateSessionID());
+                localStorage.setItem('count', '1');
+            }
+            
+            // Initialize tracking
+            let count = parseInt(localStorage.getItem('count')) || 1;
+            document.getElementById('tracker').innerText = `Tracker: ${count}/30`;
+            
+            // Other page-specific initialization...
+        };
         function initializeTracking() {
             let count = localStorage.getItem('count') || 1;
             localStorage.setItem('count', count);
@@ -687,34 +701,63 @@
 
             // Next button
             document.querySelector('.next-button').addEventListener('click', function(event) {
-                event.preventDefault();
-                
-                if (!document.querySelector('input[name="robot"]:checked')) {
-                    alert('Please select a robot path before continuing');
-                    return;
+            event.preventDefault();
+            
+            if (!document.querySelector('input[name="robot"]:checked')) {
+                alert('Please select a robot path before continuing');
+                return;
+            }
+            
+            let currentCount = parseInt(localStorage.getItem('count')) || 1;
+            currentCount++; // Increment count
+            
+            if (currentCount > 30) {
+                // Generate CSV and reset
+                if (userResponses.length > 0) {
+                    const now = new Date();
+                    const filename = `${now.toISOString().slice(0,10)}-${now.toTimeString().slice(0,8).replace(/:/g,'')}-${trialID-1}-Bounding_Overwatch.csv`;
+                    downloadCSV(filename);
                 }
                 
-                let currentCount = parseInt(localStorage.getItem('count')) || 1;
+                // Full reset
+                localStorage.removeItem('userResponses');
+                localStorage.removeItem('count');
+                localStorage.removeItem('sessionID');
+                userResponses = [];
+                window.location.href = "BO_home_page.html";
+            } else {
+                // Update count and continue
+                localStorage.setItem('count', currentCount);
                 
-                if (currentCount >= 30) {
-                    if (userResponses.length > 0) {
-                        const now = new Date();
-                        const filename = `${now.toISOString().slice(0, 10)}-${now.toTimeString().slice(0, 8).replace(/:/g, '')}-${trialID - 1}-Bounding_Overwatch.csv`;
-                        downloadCSV(filename);
-                        localStorage.removeItem('userResponses');
-                        userResponses = [];
-                    }
-                    
-                    localStorage.setItem('count', 1);
-                    window.location.href = "BO_home_page.html";
-                } else {
-                    // Alternate between high and low stakes pages
-                    const nextPage = window.location.href.includes('highStake') ? 
-                        "BO_mission_lowStake.html" : "BO_mission_highStake.html";
-                    window.location.href = nextPage;
-                }
-            });
+                // Alternate between high and low stakes pages
+                const nextPage = window.location.href.includes('highStake') ? 
+                    "BO_mission_lowStake.html" : "BO_mission_highStake.html";
+                window.location.href = nextPage;
+            }
+        });
         }
+        // Enhanced reset function for both quit and switch buttons
+        function resetSession() {
+            // Clear all session data
+            localStorage.removeItem('sessionID');
+            localStorage.removeItem('count');
+            localStorage.removeItem('userResponses');
+            localStorage.removeItem('selectedProfile');
+            
+            // Generate new session ID immediately
+            localStorage.setItem('sessionID', generateSessionID());
+        }
+
+        // Update event listeners for quit and switch buttons
+        document.querySelector('.QuitButton').addEventListener('click', function() {
+            resetSession();
+            window.location.href = "BO_end_page.html";
+        });
+
+        document.getElementById('switchButton').addEventListener('click', function() {
+            resetSession();
+            window.location.href = "BO_home_page.html";
+        });
 
         // ========== MAIN EXECUTION ==========
         window.onload = function() {

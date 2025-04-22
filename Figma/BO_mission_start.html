@@ -98,6 +98,11 @@
                     return;
                 }
                 
+                // Initialize or increment count
+                let count = parseInt(localStorage.getItem('count')) || 1;
+                localStorage.setItem('count', count);
+                document.getElementById('tracker').innerText = `Tracker: ${count}/30`;
+                
                 // Alternate between high and low stakes starting with high
                 window.location.href = "BO_mission_highStake.html";
             }
