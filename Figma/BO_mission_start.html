@@ -82,15 +82,26 @@
               </div>
             
             <!-- Next button -->
-            <a href="BO_mission_highStake.html" style="text-decoration: none;" class="next-button">
-              <div style="width: 181px; height: 54px; padding-left: 24px; padding-right: 24px; left: 361px; top: 754px; position: absolute; background: #1B6048; border-radius: 32px; flex-direction: column; justify-content: center; align-items: center; display: inline-flex">
+            <div onclick="startMission()" style="width: 181px; height: 54px; padding-left: 24px; padding-right: 24px; left: 361px; top: 754px; position: absolute; background: #1B6048; border-radius: 32px; flex-direction: column; justify-content: center; align-items: center; display: inline-flex; cursor: pointer;">
                 <div style="flex-direction: column; justify-content: center; align-items: center; display: flex">
-                  <div style="justify-content: flex-start; align-items: flex-start; gap: 8px; display: inline-flex">
-                    <div style="color: white; font-size: 16px; font-family: Sarabun; font-weight: 700; line-height: 24px; word-wrap: break-word">Next</div>
-                  </div>
+                    <div style="justify-content: flex-start; align-items: flex-start; gap: 8px; display: inline-flex">
+                        <div style="color: white; font-size: 16px; font-family: Sarabun; font-weight: 700; line-height: 24px; word-wrap: break-word">Next</div>
+                    </div>
                 </div>
-              </div>
-            </a>
+            </div>
+
+            <script>
+            function startMission() {
+                const selectedProfile = document.querySelector('input[name="profile"]:checked');
+                if (!selectedProfile) {
+                    alert('Please select an operating style before continuing');
+                    return;
+                }
+                
+                // Alternate between high and low stakes starting with high
+                window.location.href = "BO_mission_highStake.html";
+            }
+            </script>
             <!-- Switch button -->
         <a href="BO_home_page.html" style="text-decoration: none;" id="switchButton">
             <div style="width: 181px; height: 54px; padding-left: 24px; padding-right: 24px; left: 100px; top: 754px; position: absolute; background: #1B3360; border-radius: 32px; flex-direction: column; justify-content: center; align-items: center; display: inline-flex">
@@ -111,6 +122,54 @@
         </div>
 
 <script>
+    // Initialize tracking when page loads
+    window.onload = function() {
+        // Reset tracker if starting fresh
+        if(!localStorage.getItem('count')) {
+            localStorage.setItem('count', '1');
+            document.getElementById('tracker').innerText = 'Tracker: 1/30';
+        }
+        
+        // Clear any old responses
+        localStorage.removeItem('userResponses');
+    };
+
+    // Generate a unique session ID
+    function generateSessionID() {
+        return 'session_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+    }
+
+    // Initialize tracking when page loads
+    window.onload = function() {
+        // Reset tracker and generate new session ID if starting fresh
+        if(!localStorage.getItem('sessionID')) {
+            localStorage.setItem('sessionID', generateSessionID());
+            localStorage.setItem('count', '1');
+            document.getElementById('tracker').innerText = 'Tracker: 1/30';
+        }
+        
+        // Clear any old responses for this session
+        localStorage.removeItem('userResponses');
+    };
+
+    // Handle quit button click
+    document.querySelector('.QuitButton').addEventListener('click', function() {
+        resetSession();
+    });
+
+    // Handle switch button click
+    document.getElementById('switchButton').addEventListener('click', function() {
+        resetSession();
+    });
+
+    function resetSession() {
+        // Clear session data
+        localStorage.removeItem('sessionID');
+        localStorage.removeItem('count');
+        localStorage.removeItem('userResponses');
+        localStorage.removeItem('selectedProfile');
+    }
+
     // Profile settings - will be stored in localStorage
     const PROFILE_SETTINGS = {
         steady: {

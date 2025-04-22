@@ -138,6 +138,27 @@
             get y() { return (this.row + 0.5) * cellHeight; }
           };
 
+            function initializeTracking() {
+                // Load or initialize count
+                let count = localStorage.getItem('count');
+                if (!count) {
+                    count = 1;
+                    localStorage.setItem('count', count);
+                }
+                document.getElementById('tracker').innerText = `Tracker: ${count}/30`;
+                
+                // Increment for next time (but don't save yet)
+                currentCount = parseInt(count) + 1;
+            }
+
+            // Call this in window.onload
+            window.onload = function() {
+                initializeTracking();
+                generateMap();
+                generateRobots(3);
+                redrawCanvas();
+            };
+
           // Create a grid map with open (true) or obstructed (false) cells
           function generateMap() {
             gridMap = [];
@@ -606,15 +627,14 @@
               }
           }
 
-          function getCount() {
-              let count = localStorage.getItem('count');
-              return count ? parseInt(count) : 1;
-          }
+            function getCount() {
+            return parseInt(localStorage.getItem('count')) || 1;
+            }
 
           function setCount(count) {
-              localStorage.setItem('count', count);
-              document.getElementById('tracker').innerText = 'Tracker: ' + count + '/30';
-          }
+            localStorage.setItem('count', count);
+            document.getElementById('tracker').innerText = `Tracker: ${count}/30`;
+            }
 
           let currentCount = getCount();
           document.getElementById('tracker').innerText = 'Tracker: ' + currentCount + '/30';
@@ -702,37 +722,40 @@
               document.body.removeChild(a);
           }
 
-          const nextButton = document.querySelector('.next-button');
-          nextButton.addEventListener('click', function(event) {
-              event.preventDefault();
-              
-              const selectedRobot = document.querySelector('input[name="robot"]:checked');
-              if (!selectedRobot) {
-                  alert('Please select a robot path before continuing');
-                  return;
-              }
-              
-              let currentCount = getCount();
-              
-              if (currentCount >= 30) {
-                  if (userResponses.length > 0) {
-                      const csvData = convertToCSV(userResponses);
-                      const now = new Date();
-                      const dateString = now.toISOString().slice(0, 10);
-                      const timeString = now.toTimeString().slice(0, 8).replace(/:/g, '');
-                      const filename = `${dateString}-${timeString}-${trialID - 1}-Bounding_Overwatch.csv`;
-                      
-                      downloadCSV(csvData, filename);
-                      localStorage.removeItem('userResponses');
-                      userResponses = [];
-                  }
-                  
-                  setCount(1);
-                  window.location.href = "BO_home_page.html";
-              } else {
-                  window.location.href = "BO_mission_start.html";
-              }
-          });
+               const nextButton = document.querySelector('.next-button');
+        nextButton.addEventListener('click', function(event) {
+            event.preventDefault();
+            
+            const selectedRobot = document.querySelector('input[name="robot"]:checked');
+            if (!selectedRobot) {
+                alert('Please select a robot path before continuing');
+                return;
+            }
+            
+            let currentCount = getCount();
+            
+            if (currentCount >= 30) {
+                if (userResponses.length > 0) {
+                    const csvData = convertToCSV(userResponses);
+                    const now = new Date();
+                    const dateString = now.toISOString().slice(0, 10);
+                    const timeString = now.toTimeString().slice(0, 8).replace(/:/g, '');
+                    const filename = `${dateString}-${timeString}-${trialID - 1}-Bounding_Overwatch.csv`;
+                    
+                    downloadCSV(csvData, filename);
+                    localStorage.removeItem('userResponses');
+                    userResponses = [];
+                }
+                
+                setCount(1);
+                window.location.href = "BO_home_page.html";
+            } else {
+                // Alternate between high and low stakes pages
+                const nextPage = window.location.href.includes('highStake') ? 
+                    "BO_mission_lowStake.html" : "BO_mission_highStake.html";
+                window.location.href = nextPage;
+            }
+        });
 
           window.onload = function() {
               generateMap();
