@@ -119,404 +119,41 @@
         </div>
 
       <script>
-          const canvas = document.getElementById('overlayCanvas');
-          const ctx = canvas.getContext('2d');
-          const canvasWidth = canvas.width;
-          const canvasHeight = canvas.height;
-          const gridCols = 20;
-          const gridRows = 20;
-          const cellWidth = canvasWidth / gridCols;
-          const cellHeight = canvasHeight / gridRows;
-          let gridMap = [];
-          let robots = [];
+        // ========== CONSTANTS & INITIALIZATION ==========
+        const canvas = document.getElementById('overlayCanvas');
+        const ctx = canvas.getContext('2d');
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        const gridCols = 20;
+        const gridRows = 20;
+        const cellWidth = canvasWidth / gridCols;
+        const cellHeight = canvasHeight / gridRows;
 
-          // Define operator marker at bottom center of the grid
-          const operator = {
+        // Profile settings from localStorage or defaults
+        const profileSettings = JSON.parse(localStorage.getItem('selectedProfile')) || {
+            L_traversability: 0.6, // Default balanced profile
+            L_visibility: 0.6
+        };
+
+        // Operator position
+        const operator = {
             row: gridRows - 1,
             col: Math.floor(gridCols / 2),
             get x() { return (this.col + 0.5) * cellWidth; },
             get y() { return (this.row + 0.5) * cellHeight; }
-          };
+        };
 
-          function initializeTracking() {
-                // Load or initialize count
-                let count = localStorage.getItem('count');
-                if (!count) {
-                    count = 1;
-                    localStorage.setItem('count', count);
-                }
-                document.getElementById('tracker').innerText = `Tracker: ${count}/30`;
-                
-                // Increment for next time (but don't save yet)
-                currentCount = parseInt(count) + 1;
-            }
+        // State variables
+        let gridMap = [];
+        let robots = [];
+        let n_traversability = 0.5; // Initial need values
+        let n_visibility = 0.5;
+        let a_traversability = 0.5; // Initial state values
+        let a_visibility = 0.5;
+        const g_traversability = 1.0; // Goal values
+        const g_visibility = 1.0;
 
-            // Call this in window.onload
-            window.onload = function() {
-                initializeTracking();
-                generateMap();
-                generateRobots(3);
-                redrawCanvas();
-            };
-          
-          // Create a grid map with open (true) or obstructed (false) cells
-          function generateMap() {
-            gridMap = [];
-            for (let r = 0; r < gridRows; r++) {
-              let row = [];
-              for (let c = 0; c < gridCols; c++) {
-                row.push(Math.random() < 0.5);
-              }
-              gridMap.push(row);
-            }
-          }
-
-          // Calculate visibility of cells
-          function calculateVisibility() {
-            const visibilityMap = Array.from({ length: gridRows }, () =>
-              Array(gridCols).fill(false)
-            );
-
-            const visibilityRadius = 5;
-
-            robots.forEach(robot => {
-              for (let r = -visibilityRadius; r <= visibilityRadius; r++) {
-                for (let c = -visibilityRadius; c <= visibilityRadius; c++) {
-                  const row = robot.row + r;
-                  const col = robot.col + c;
-                  if (
-                    row >= 0 &&
-                    row < gridRows &&
-                    col >= 0 &&
-                    col < gridCols &&
-                    Math.sqrt(r * r + c * c) <= visibilityRadius
-                  ) {
-                    visibilityMap[row][col] = true;
-                  }
-                }
-              }
-            });
-
-            let current = { row: operator.row, col: operator.col };
-            while (current.row >= 0) {
-              visibilityMap[current.row][current.col] = true;
-              current.row--;
-            }
-
-            return visibilityMap;
-          }
-
-          // Draw the map overlay
-          function drawMap() {
-            const visibilityMap = calculateVisibility();
-
-            for (let r = 0; r < gridRows; r++) {
-              for (let c = 0; c < gridCols; c++) {
-                if (!visibilityMap[r][c]) {
-                  ctx.fillStyle = 'rgba(0,0,0,0.3)';
-                  ctx.fillRect(c * cellWidth, r * cellHeight, cellWidth, cellHeight);
-                }
-              }
-            }
-          }
-
-          // Get all open cells from the grid
-          function getOpenCells() {
-            const openCells = [];
-            for (let r = 0; r < gridRows; r++) {
-              for (let c = 0; c < gridCols; c++) {
-                if (gridMap[r][c]) {
-                  openCells.push({ row: r, col: c });
-                }
-              }
-            }
-            return openCells;
-          }
-
-          // Generate consequences for each robot
-          function generateConsequences() {
-              let percents = [];
-              for (let i = 0; i < 4; i++) {
-                  percents.push(Math.random());
-              }
-              const sum = percents.reduce((a, b) => a + b, 0);
-              return {
-                  C1: Math.round((percents[0]/sum)*100),
-                  C2: Math.round((percents[1]/sum)*100),
-                  C3: Math.round((percents[2]/sum)*100),
-                  C4: Math.round((percents[3]/sum)*100)
-              };
-          }
-
-          // Place robots with consequences
-          function generateRobots(numRobots) {
-              const openCells = getOpenCells();
-              robots = [];
-              for (let i = 0; i < numRobots && openCells.length; i++) {
-                  const index = Math.floor(Math.random() * openCells.length);
-                  const cell = openCells.splice(index, 1)[0];
-                  const x = (cell.col + 0.5) * cellWidth;
-                  const y = (cell.row + 0.5) * cellHeight;
-                  robots.push({
-                      x,
-                      y,
-                      row: cell.row,
-                      col: cell.col,
-                      consequences: generateConsequences()
-                  });
-              }
-          }
-
-          // Draw robots as triangles
-          function drawRobots() {
-            robots.forEach(robot => {
-              ctx.beginPath();
-              ctx.moveTo(robot.x, robot.y - 10);
-              ctx.lineTo(robot.x + 10, robot.y + 10);
-              ctx.lineTo(robot.x - 10, robot.y + 10);
-              ctx.closePath();
-              ctx.fillStyle = 'blue';
-              ctx.fill();
-            });
-          }
-
-          // Draw the operator marker
-          function drawOperator() {
-            ctx.beginPath();
-            ctx.arc(operator.x, operator.y, 10, 0, 2 * Math.PI);
-            ctx.fillStyle = 'red';
-            ctx.fill();
-          }
-
-          // Overlay cells with random colors
-          function overlayRandomCells() {
-              const colors = ['rgba(255, 0, 0, 0.1)', 'rgba(255, 255, 0, 0.1)', 'rgba(0, 255, 0, 0.1)'];
-              for (let r = 0; r < gridRows; r++) {
-                  for (let c = 0; c < gridCols; c++) {
-                      const randomColor = colors[Math.floor(Math.random() * colors.length)];
-                      ctx.fillStyle = randomColor;
-                      ctx.fillRect(c * cellWidth, r * cellHeight, cellWidth, cellHeight);
-                  }
-              }
-          }
-
-    // Updated path generation with more natural curves and independent paths
-    function generatePath(robot) {
-        const path = [];
-        let current = { row: operator.row, col: operator.col };
-        const visited = new Set();
-        visited.add(`${current.row},${current.col}`);
-        
-        // Add some randomness to the path direction preference
-        const directionBias = Math.random() > 0.5 ? 1 : -1;
-        
-        while (current.row !== robot.row || current.col !== robot.col) {
-            // Calculate direction to target
-            const rowDir = robot.row - current.row;
-            const colDir = robot.col - current.col;
-            
-            // Possible moves with some randomness
-            const possibleMoves = [];
-            
-            // Always include the most direct move
-            if (rowDir !== 0) {
-                possibleMoves.push({
-                    row: current.row + Math.sign(rowDir),
-                    col: current.col
-                });
-            }
-            if (colDir !== 0) {
-                possibleMoves.push({
-                    row: current.row,
-                    col: current.col + Math.sign(colDir)
-                });
-            }
-            
-            // Add some diagonal moves for curves
-            if (Math.random() > 0.7) { // 30% chance of diagonal move
-                if (rowDir !== 0 && colDir !== 0) {
-                    possibleMoves.push({
-                        row: current.row + Math.sign(rowDir),
-                        col: current.col + Math.sign(colDir) * directionBias
-                    });
-                }
-            }
-            
-            // Filter out invalid moves
-            const validMoves = possibleMoves.filter(move => 
-                move.row >= 0 && move.row < gridRows &&
-                move.col >= 0 && move.col < gridCols &&
-                !visited.has(`${move.row},${move.col}`)
-            );
-            
-            if (validMoves.length > 0) {
-                // Sort moves by distance to target (with some randomness)
-                validMoves.sort((a, b) => {
-                    const distA = Math.abs(a.row - robot.row) + Math.abs(a.col - robot.col);
-                    const distB = Math.abs(b.row - robot.row) + Math.abs(b.col - robot.col);
-                    // Add some randomness to path selection
-                    return (distA + (Math.random() * 2 - 1)) - (distB + (Math.random() * 2 - 1));
-                });
-                
-                // Choose the best move (with some randomness)
-                const chosenIndex = Math.random() > 0.8 ? 
-                    Math.floor(Math.random() * validMoves.length) : 0;
-                current = validMoves[chosenIndex];
-                visited.add(`${current.row},${current.col}`);
-                path.push({ row: current.row, col: current.col });
-            } else {
-                // If no valid moves, try to find an alternative path
-                const alternativeMoves = [];
-                if (current.row > 0) alternativeMoves.push({ row: current.row - 1, col: current.col });
-                if (current.row < gridRows - 1) alternativeMoves.push({ row: current.row + 1, col: current.col });
-                if (current.col > 0) alternativeMoves.push({ row: current.row, col: current.col - 1 });
-                if (current.col < gridCols - 1) alternativeMoves.push({ row: current.row, col: current.col + 1 });
-                
-                const validAlternatives = alternativeMoves.filter(move => 
-                    !visited.has(`${move.row},${move.col}`)
-                );
-                
-                if (validAlternatives.length > 0) {
-                    current = validAlternatives[Math.floor(Math.random() * validAlternatives.length)];
-                    visited.add(`${current.row},${current.col}`);
-                    path.push({ row: current.row, col: current.col });
-                } else {
-                    break; // No possible moves
-                }
-            }
-        }
-        
-        return path;
-    }
-
-    // Updated drawConnectorPath with smooth curves
-    function drawConnectorPath() {
-        robots.forEach(robot => {
-            const path = generatePath(robot);
-            if (path.length > 0) {
-                ctx.beginPath();
-                ctx.moveTo(operator.x, operator.y);
-                
-                // Draw smooth curve through the points
-                for (let i = 0; i < path.length; i++) {
-                    const cell = path[i];
-                    const x = (cell.col + 0.5) * cellWidth;
-                    const y = (cell.row + 0.5) * cellHeight;
-                    
-                    if (i === 0 || i === path.length - 1) {
-                        ctx.lineTo(x, y);
-                    } else {
-                        // Create control points for curves
-                        const prevCell = path[i-1];
-                        const nextCell = path[i+1] || path[i];
-                        
-                        const cp1x = (prevCell.col + 0.5) * cellWidth;
-                        const cp1y = (prevCell.row + 0.5) * cellHeight;
-                        const cp2x = (nextCell.col + 0.5) * cellWidth;
-                        const cp2y = (nextCell.row + 0.5) * cellHeight;
-                        
-                        // Draw quadratic curve
-                        ctx.quadraticCurveTo(
-                            (cp1x + x) / 2, 
-                            (cp1y + y) / 2,
-                            x, y
-                        );
-                    }
-                }
-                
-                ctx.strokeStyle = 'black';
-                ctx.lineWidth = 3;
-                ctx.stroke();
-            } else {
-                // Fallback to straight line if no path
-                ctx.beginPath();
-                ctx.moveTo(operator.x, operator.y);
-                ctx.lineTo(robot.x, robot.y);
-                ctx.strokeStyle = 'black';
-                ctx.lineWidth = 3;
-                ctx.stroke();
-            }
-        });
-    }
-
-          // Update the legend to include consequence information
-          const legendDiv = document.querySelector('[style*="position: absolute; bottom: 10px; left: 10px;"]');
-          legendDiv.innerHTML = `
-              <div><span style="display:inline-block; width: 12px; height: 12px; background-color: red; margin-right: 5px;"></span>Operator</div>
-              <div><span style="display:inline-block; width: 12px; height: 12px; background-color: blue; margin-right: 5px;"></span>Robot</div>
-              <div><span style="display:inline-block; width: 12px; height: 12px; background-color: black; margin-right: 5px;"></span>Connector Path</div>
-              <div style="margin-top: 10px;"><b>Consequence Types:</b></div>
-              <div><span style="display:inline-block; width: 12px; height: 12px; background-color: rgba(255, 0, 0, 0.1); margin-right: 5px;"></span>C1: Easy nav (1) + Low exposure (1)</div>
-              <div><span style="display:inline-block; width: 12px; height: 12px; background-color: rgba(255, 255, 0, 0.1); margin-right: 5px;"></span>C2: Hard nav (0.1) + Low exposure (1)</div>
-              <div><span style="display:inline-block; width: 12px; height: 12px; background-color: rgba(0, 255, 0, 0.1); margin-right: 5px;"></span>C3: Easy nav (1) + High exposure (0.1)</div>
-              <div><span style="display:inline-block; width: 12px; height: 12px; background-color: rgba(0, 0, 255, 0.1); margin-right: 5px;"></span>C4: Hard nav (0.1) + High exposure (0.1)</div>
-          `;
-
-          // Create tooltip
-          const tooltip = document.createElement('div');
-          tooltip.id = 'robotTooltip';
-          Object.assign(tooltip.style, {
-              position: 'absolute',
-              zIndex: '1000',
-              background: 'rgba(255,255,255,0.95)',
-              padding: '8px 12px',
-              border: '1px solid #ccc',
-              borderRadius: '6px',
-              fontFamily: 'Sarabun, sans-serif',
-              fontSize: '14px',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
-              minWidth: '150px',
-              pointerEvents: 'none',
-              display: 'none',
-              transition: 'opacity 0.2s ease'
-          });
-          document.body.appendChild(tooltip);
-
-        // ======= DISTANCE-BASED SAFETY FUNCTION =======
-        function computeSafetyLevel(operatorPosition, robotPositions, maxRadius = maxEffectiveRadius) {
-            let totalContribution = 0;
-
-            for (const robot of robotPositions) {
-                const dx = robot.x - operatorPosition.x;
-                const dy = robot.y - operatorPosition.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-
-                // Normalize contribution: closer robots contribute more to safety
-                const contribution = Math.max(0, 1 - distance / maxRadius);
-                totalContribution += contribution;
-            }
-
-            // Normalize across 3 robots, so a_safety(t) ∈ [0, 1]
-            return Math.min(1, totalContribution / robotPositions.length);
-        }
-
-
-        // ======= SAFETY NEED UPDATE FUNCTION (Equation 7 from DFT) =======
-        function updateSafetyNeedWeight(n_safety, g_safety, a_safety, L_safety) {
-            return L_safety * n_safety + (g_safety - a_safety);
-        }
-
-
-        // ======= EXAMPLE INTEGRATION FLOW =======
-        function updateSafetyNeedAndScores(operatorPosition, robotPositions, consequences, attributeQualities) {
-            // Step 1: Compute a_safety(t) based on robot proximity
-            const a_safety = computeSafetyLevel(operatorPosition, robotPositions);
-
-            // Step 2: Update n_k(t+h) based on the safety evaluation
-            n_safety = updateSafetyNeedWeight(n_safety, g_safety, a_safety, L_safety);
-
-            // Step 3: Use updated n_safety to scale the exposure attribute (need for safety)
-            const needWeights = {
-                navigation: 1.0,     // Static: navigation difficulty remains fixed
-                exposure: n_safety   // Dynamic: exposure weight based on safety need
-            };
-
-            // Step 4: Compute weighted scores m_j(t) for each consequence (C1, C2, C3, C4)
-            return calculateWeightedScore(consequences, needWeights, attributeQualities);
-        }
-
-
-        // ======= STATIC STRUCTURES EXAMPLE =======
+        // Attribute qualities for consequence types
         const attributeQualities = {
             C1: { navigation: 1.0, exposure: 1.0 },   // Easy nav, Low exposure
             C2: { navigation: 0.1, exposure: 1.0 },   // Hard nav, Low exposure
@@ -524,244 +161,577 @@
             C4: { navigation: 0.1, exposure: 0.1 }    // Hard nav, High exposure
         };
 
-        // Function to calculate weighted scores for each consequence
-        function calculateWeightedScore(consequences, needWeights, attributeQualities) {
-            const scores = {};
-
-            for (const [consequence, value] of Object.entries(consequences)) {
-                const q = attributeQualities[consequence];
-                const m_j = (needWeights.navigation * q.navigation) +
-                            (needWeights.exposure * q.exposure);
-
-                // Final weighted score for this consequence
-                scores[consequence] = (value * m_j) / 100;
-            }
-
-            return scores;
-        }
-
-
-
-          // Handle mouse movement for tooltip
-          canvas.addEventListener('mousemove', function(evt) {
-              const rect = canvas.getBoundingClientRect();
-              const mouseX = evt.clientX - rect.left;
-              const mouseY = evt.clientY - rect.top;
-              
-              let closestRobot = null;
-              let minDistance = Infinity;
-              
-              robots.forEach((robot, index) => {
-                  const dx = mouseX - robot.x;
-                  const dy = mouseY - robot.y;
-                  const distance = Math.sqrt(dx * dx + dy * dy);
-                  
-                  if (distance < 20 && distance < minDistance) {
-                      minDistance = distance;
-                      closestRobot = { robot, index };
-                  }
-              });
-              
-              if (closestRobot) {
-                  const { robot, index } = closestRobot;
-                  
-                  tooltip.innerHTML = `
-                      <div style="font-weight:700;margin-bottom:4px;">Robot ${index + 1}</div>
-                      <div>C1: ${robot.consequences.C1}% (Easy/Low)</div>
-                      <div>C2: ${robot.consequences.C2}% (Hard/Low)</div>
-                      <div>C3: ${robot.consequences.C3}% (Easy/High)</div>
-                      <div>C4: ${robot.consequences.C4}% (Hard/High)</div>
-                  `;
-                  
-                  let tooltipX = robot.x + 20;
-                  let tooltipY = robot.y - tooltip.offsetHeight / 2;
-                  
-                  if (tooltipX + tooltip.offsetWidth > canvasWidth) {
-                      tooltipX = robot.x - tooltip.offsetWidth - 20;
-                  }
-                  
-                  if (tooltipY + tooltip.offsetHeight > canvasHeight) {
-                      tooltipY = canvasHeight - tooltip.offsetHeight - 10;
-                  }
-                  
-                  if (tooltipY < 10) {
-                      tooltipY = 10;
-                  }
-                  
-                  tooltip.style.left = `${rect.left + tooltipX}px`;
-                  tooltip.style.top = `${rect.top + tooltipY}px`;
-                  tooltip.style.display = 'block';
-              } else {
-                  tooltip.style.display = 'none';
-              }
-          });
-
-          canvas.addEventListener('mouseleave', function() {
-              tooltip.style.display = 'none';
-          });
-
-          function redrawCanvas() {
-              ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-              const canyonImage = document.getElementById('canyonImage');
-              ctx.drawImage(canyonImage, 0, 0, canvasWidth, canvasHeight);
-              drawMap();
-              overlayRandomCells();
-              drawConnectorPath();
-              drawOperator();
-              drawRobots();
-          }
-
-          let userResponses = [];
-          let trialID = 1;
-
-          function saveResponses() {
-              localStorage.setItem('userResponses', JSON.stringify(userResponses));
-          }
-
-          function loadResponses() {
-              const storedResponses = localStorage.getItem('userResponses');
-              if (storedResponses) {
-                  userResponses = JSON.parse(storedResponses);
-              } else {
-                  userResponses = [];
-              }
-          }
-
-          function getCount() {
-            return parseInt(localStorage.getItem('count')) || 1;
-            }
-
-          function setCount(count) {
+        // ========== INITIALIZATION FUNCTIONS ==========
+        function initializeTracking() {
+            let count = localStorage.getItem('count') || 1;
             localStorage.setItem('count', count);
             document.getElementById('tracker').innerText = `Tracker: ${count}/30`;
+        }
+
+        function generateMap() {
+            gridMap = [];
+            for (let r = 0; r < gridRows; r++) {
+                let row = [];
+                for (let c = 0; c < gridCols; c++) {
+                    row.push(Math.random() < 0.5);
+                }
+                gridMap.push(row);
+            }
+        }
+
+        function generateRobots(numRobots) {
+            const openCells = getOpenCells();
+            robots = [];
+            
+            for (let i = 0; i < numRobots && openCells.length; i++) {
+                const index = Math.floor(Math.random() * openCells.length);
+                const cell = openCells.splice(index, 1)[0];
+                
+                robots.push({
+                    x: (cell.col + 0.5) * cellWidth,
+                    y: (cell.row + 0.5) * cellHeight,
+                    row: cell.row,
+                    col: cell.col,
+                    consequences: generateConsequences(),
+                    id: i + 1
+                });
+            }
+        }
+
+        function generateConsequences() {
+            let percents = [];
+            for (let i = 0; i < 4; i++) {
+                percents.push(Math.random());
+            }
+            const sum = percents.reduce((a, b) => a + b, 0);
+            return {
+                C1: Math.round((percents[0]/sum)*100),
+                C2: Math.round((percents[1]/sum)*100),
+                C3: Math.round((percents[2]/sum)*100),
+                C4: Math.round((percents[3]/sum)*100)
+            };
+        }
+
+        // ========== GRID & PATH FUNCTIONS ==========
+        function getOpenCells() {
+            const openCells = [];
+            for (let r = 0; r < gridRows; r++) {
+                for (let c = 0; c < gridCols; c++) {
+                    if (gridMap[r][c]) {
+                        openCells.push({ row: r, col: c });
+                    }
+                }
+            }
+            return openCells;
+        }
+
+        function calculateVisibility() {
+            const visibilityMap = Array.from({ length: gridRows }, () => Array(gridCols).fill(false));
+            const visibilityRadius = 5;
+
+            robots.forEach(robot => {
+                for (let r = -visibilityRadius; r <= visibilityRadius; r++) {
+                    for (let c = -visibilityRadius; c <= visibilityRadius; c++) {
+                        const row = robot.row + r;
+                        const col = robot.col + c;
+                        if (row >= 0 && row < gridRows && col >= 0 && col < gridCols && 
+                            Math.sqrt(r * r + c * c) <= visibilityRadius) {
+                            visibilityMap[row][col] = true;
+                        }
+                    }
+                }
+            });
+
+            // Operator line of sight
+            let current = { row: operator.row, col: operator.col };
+            while (current.row >= 0) {
+                visibilityMap[current.row][current.col] = true;
+                current.row--;
             }
 
-          let currentCount = getCount();
-          document.getElementById('tracker').innerText = 'Tracker: ' + currentCount + '/30';
-          
-          currentCount += 1;
-          setCount(currentCount);
+            return visibilityMap;
+        }
 
-          loadResponses();
-
-          function recordResponse(choice, time, consequences) {
-              const robot1Scores = calculateWeightedScore(consequences[0]);
-              const robot2Scores = calculateWeightedScore(consequences[1]);
-              const robot3Scores = calculateWeightedScore(consequences[2]);
-              
-              userResponses.push({
-                  ID: trialID++,
-                  choice: parseInt(choice.replace('robot', '')),
-                  timeElapsed: time,
-                  C11: robot1Scores.C1,
-                  C12: robot1Scores.C2,
-                  C13: robot1Scores.C3,
-                  C14: robot1Scores.C4,
-                  C21: robot2Scores.C1,
-                  C22: robot2Scores.C2,
-                  C23: robot2Scores.C3,
-                  C24: robot2Scores.C4,
-                  C31: robot3Scores.C1,
-                  C32: robot3Scores.C2,
-                  C33: robot3Scores.C3,
-                  C34: robot3Scores.C4
-              });
-              saveResponses();
-          }
-
-          const radioButtons = document.querySelectorAll('input[type="radio"][name="robot"]');
-          radioButtons.forEach(radioButton => {
-              radioButton.addEventListener('change', function() {
-                  const startTime = performance.now();
-                  const choice = this.value;
-
-                  setTimeout(() => {
-                      const endTime = performance.now();
-                      const timeElapsed = endTime - startTime;
-                      const consequences = robots.map(robot => robot.consequences);
-                      recordResponse(choice, timeElapsed, consequences);
-                  }, 500);
-              });
-          });
-
-          function convertToCSV(responses) {
-              const header = "ID,choice,C11,C12,C13,C14,C21,C22,C23,C24,C31,C32,C33,C34,timeElapsed\n";
-              let csv = header;
-              
-              responses.forEach(response => {
-                  csv += [
-                      response.ID,
-                      response.choice,
-                      response.C11,
-                      response.C12,
-                      response.C13,
-                      response.C14,
-                      response.C21,
-                      response.C22,
-                      response.C23,
-                      response.C24,
-                      response.C31,
-                      response.C32,
-                      response.C33,
-                      response.C34,
-                      response.timeElapsed
-                  ].join(',') + '\n';
-              });
-              
-              return csv;
-          }
-
-          function downloadCSV(csv, filename) {
-              const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = filename || 'user_responses.csv';
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-          }
-
-        const nextButton = document.querySelector('.next-button');
-        nextButton.addEventListener('click', function(event) {
-            event.preventDefault();
+        function generatePath(robot) {
+            const path = [];
+            let current = { row: operator.row, col: operator.col };
+            const visited = new Set();
+            visited.add(`${current.row},${current.col}`);
             
-            const selectedRobot = document.querySelector('input[name="robot"]:checked');
-            if (!selectedRobot) {
-                alert('Please select a robot path before continuing');
-                return;
-            }
+            const directionBias = Math.random() > 0.5 ? 1 : -1;
             
-            let currentCount = getCount();
-            
-            if (currentCount >= 30) {
-                if (userResponses.length > 0) {
-                    const csvData = convertToCSV(userResponses);
-                    const now = new Date();
-                    const dateString = now.toISOString().slice(0, 10);
-                    const timeString = now.toTimeString().slice(0, 8).replace(/:/g, '');
-                    const filename = `${dateString}-${timeString}-${trialID - 1}-Bounding_Overwatch.csv`;
-                    
-                    downloadCSV(csvData, filename);
-                    localStorage.removeItem('userResponses');
-                    userResponses = [];
+            while (current.row !== robot.row || current.col !== robot.col) {
+                const rowDir = robot.row - current.row;
+                const colDir = robot.col - current.col;
+                const possibleMoves = [];
+                
+                // Direct moves
+                if (rowDir !== 0) {
+                    possibleMoves.push({ row: current.row + Math.sign(rowDir), col: current.col });
+                }
+                if (colDir !== 0) {
+                    possibleMoves.push({ row: current.row, col: current.col + Math.sign(colDir) });
                 }
                 
-                setCount(1);
-                window.location.href = "BO_home_page.html";
-            } else {
-                // Alternate between high and low stakes pages
-                const nextPage = window.location.href.includes('highStake') ? 
-                    "BO_mission_lowStake.html" : "BO_mission_highStake.html";
-                window.location.href = nextPage;
+                // Diagonal moves (30% chance)
+                if (Math.random() > 0.7 && rowDir !== 0 && colDir !== 0) {
+                    possibleMoves.push({
+                        row: current.row + Math.sign(rowDir),
+                        col: current.col + Math.sign(colDir) * directionBias
+                    });
+                }
+                
+                // Filter valid moves
+                const validMoves = possibleMoves.filter(move => 
+                    move.row >= 0 && move.row < gridRows &&
+                    move.col >= 0 && move.col < gridCols &&
+                    !visited.has(`${move.row},${move.col}`)
+                );
+                
+                if (validMoves.length > 0) {
+                    validMoves.sort((a, b) => {
+                        const distA = Math.abs(a.row - robot.row) + Math.abs(a.col - robot.col);
+                        const distB = Math.abs(b.row - robot.row) + Math.abs(b.col - robot.col);
+                        return (distA + (Math.random() * 2 - 1)) - (distB + (Math.random() * 2 - 1));
+                    });
+                    
+                    const chosenIndex = Math.random() > 0.8 ? Math.floor(Math.random() * validMoves.length) : 0;
+                    current = validMoves[chosenIndex];
+                    visited.add(`${current.row},${current.col}`);
+                    path.push({ row: current.row, col: current.col });
+                } else {
+                    // Alternative path if stuck
+                    const alternativeMoves = [];
+                    if (current.row > 0) alternativeMoves.push({ row: current.row - 1, col: current.col });
+                    if (current.row < gridRows - 1) alternativeMoves.push({ row: current.row + 1, col: current.col });
+                    if (current.col > 0) alternativeMoves.push({ row: current.row, col: current.col - 1 });
+                    if (current.col < gridCols - 1) alternativeMoves.push({ row: current.row, col: current.col + 1 });
+                    
+                    const validAlternatives = alternativeMoves.filter(move => !visited.has(`${move.row},${move.col}`));
+                    if (validAlternatives.length > 0) {
+                        current = validAlternatives[Math.floor(Math.random() * validAlternatives.length)];
+                        visited.add(`${current.row},${current.col}`);
+                        path.push({ row: current.row, col: current.col });
+                    } else {
+                        break; // No possible moves
+                    }
+                }
             }
-        });
+            
+            return path;
+        }
 
-          window.onload = function() {
-              generateMap();
-              generateRobots(3);
-              redrawCanvas();
-          };
-      </script>
+        // ========== NEED CALCULATION FUNCTIONS ==========
+        function calculateRobotState(robot) {
+            const path = generatePath(robot);
+            const pathLength = path.length;
+            const maxPathLength = gridRows + gridCols;
+            
+            // Traversability based on path length (shorter = better)
+            const trav = 1 - (pathLength / maxPathLength);
+            
+            // Visibility based on distance from operator
+            const dx = robot.x - operator.x;
+            const dy = robot.y - operator.y;
+            const distance = Math.sqrt(dx*dx + dy*dy);
+            const maxDistance = Math.sqrt(gridCols*gridCols + gridRows*gridRows) * cellWidth;
+            const vis = 1 - (distance / maxDistance);
+            
+            return { traversability: trav, visibility: vis };
+        }
+
+        function updateNeedStates(robots) {
+            // Calculate average current state across all robots
+            let avgTraversability = 0;
+            let avgVisibility = 0;
+            
+            robots.forEach(robot => {
+                const state = calculateRobotState(robot);
+                avgTraversability += state.traversability;
+                avgVisibility += state.visibility;
+            });
+            
+            a_traversability = avgTraversability / robots.length;
+            a_visibility = avgVisibility / robots.length;
+            
+            // Update needs using profile's L values
+            n_traversability = profileSettings.L_traversability * n_traversability + (g_traversability - a_traversability);
+            n_visibility = profileSettings.L_visibility * n_visibility + (g_visibility - a_visibility);
+            
+            // Clamp between 0 and 1
+            n_traversability = Math.max(0, Math.min(1, n_traversability));
+            n_visibility = Math.max(0, Math.min(1, n_visibility));
+        }
+
+        function calculateConsequenceValue(robot, consequenceType) {
+            const state = calculateRobotState(robot);
+            const q = attributeQualities[consequenceType];
+            return (n_traversability * q.navigation) + (n_visibility * q.exposure);
+        }
+
+        // ========== DRAWING FUNCTIONS ==========
+        function drawMap() {
+            const visibilityMap = calculateVisibility();
+
+            for (let r = 0; r < gridRows; r++) {
+                for (let c = 0; c < gridCols; c++) {
+                    if (!visibilityMap[r][c]) {
+                        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                        ctx.fillRect(c * cellWidth, r * cellHeight, cellWidth, cellHeight);
+                    }
+                }
+            }
+        }
+
+        function drawRobots() {
+            robots.forEach(robot => {
+                ctx.beginPath();
+                ctx.moveTo(robot.x, robot.y - 10);
+                ctx.lineTo(robot.x + 10, robot.y + 10);
+                ctx.lineTo(robot.x - 10, robot.y + 10);
+                ctx.closePath();
+                ctx.fillStyle = 'blue';
+                ctx.fill();
+            });
+        }
+
+        function drawOperator() {
+            ctx.beginPath();
+            ctx.arc(operator.x, operator.y, 10, 0, 2 * Math.PI);
+            ctx.fillStyle = 'red';
+            ctx.fill();
+        }
+
+        function overlayRandomCells() {
+            const colors = ['rgba(255, 0, 0, 0.1)', 'rgba(255, 255, 0, 0.1)', 'rgba(0, 255, 0, 0.1)'];
+            for (let r = 0; r < gridRows; r++) {
+                for (let c = 0; c < gridCols; c++) {
+                    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                    ctx.fillStyle = randomColor;
+                    ctx.fillRect(c * cellWidth, r * cellHeight, cellWidth, cellHeight);
+                }
+            }
+        }
+
+        function drawConnectorPath() {
+            robots.forEach(robot => {
+                const path = generatePath(robot);
+                if (path.length > 0) {
+                    ctx.beginPath();
+                    ctx.moveTo(operator.x, operator.y);
+                    
+                    for (let i = 0; i < path.length; i++) {
+                        const cell = path[i];
+                        const x = (cell.col + 0.5) * cellWidth;
+                        const y = (cell.row + 0.5) * cellHeight;
+                        
+                        if (i === 0 || i === path.length - 1) {
+                            ctx.lineTo(x, y);
+                        } else {
+                            const prevCell = path[i-1];
+                            const nextCell = path[i+1] || path[i];
+                            
+                            ctx.quadraticCurveTo(
+                                ((prevCell.col + 0.5) * cellWidth + x) / 2, 
+                                ((prevCell.row + 0.5) * cellHeight + y) / 2,
+                                x, y
+                            );
+                        }
+                    }
+                    
+                    ctx.strokeStyle = 'black';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                } else {
+                    // Fallback to straight line if no path
+                    ctx.beginPath();
+                    ctx.moveTo(operator.x, operator.y);
+                    ctx.lineTo(robot.x, robot.y);
+                    ctx.strokeStyle = 'black';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                }
+            });
+        }
+
+        function redrawCanvas() {
+            updateNeedStates(robots);
+            
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+            const canyonImage = document.getElementById('canyonImage');
+            ctx.drawImage(canyonImage, 0, 0, canvasWidth, canvasHeight);
+            drawMap();
+            overlayRandomCells();
+            drawConnectorPath();
+            drawOperator();
+            drawRobots();
+        }
+
+        // ========== TOOLTIPS & UI ==========
+        function setupTooltips() {
+            // Operator tooltip
+            const operatorTooltip = document.createElement('div');
+            operatorTooltip.className = 'tooltip';
+            operatorTooltip.innerHTML = `
+                <div class="tooltip-header">OPERATOR STATE</div>
+                <div class="tooltip-row">
+                    <span class="tooltip-label">Traversability Need:</span>
+                    <span class="tooltip-value" id="opTravNeed">${n_traversability.toFixed(2)}</span>
+                </div>
+                <div class="tooltip-row">
+                    <span class="tooltip-label">Visibility Need:</span>
+                    <span class="tooltip-value" id="opVisNeed">${n_visibility.toFixed(2)}</span>
+                </div>
+                <div class="tooltip-row">
+                    <span class="tooltip-label">Current Traversability:</span>
+                    <span class="tooltip-value" id="opTravState">${a_traversability.toFixed(2)}</span>
+                </div>
+                <div class="tooltip-row">
+                    <span class="tooltip-label">Current Visibility:</span>
+                    <span class="tooltip-value" id="opVisState">${a_visibility.toFixed(2)}</span>
+                </div>
+            `;
+            document.body.appendChild(operatorTooltip);
+
+            // Robot tooltip
+            const tooltip = document.createElement('div');
+            tooltip.id = 'robotTooltip';
+            Object.assign(tooltip.style, {
+                position: 'absolute',
+                zIndex: '1000',
+                background: 'rgba(255,255,255,0.95)',
+                padding: '8px 12px',
+                border: '1px solid #ccc',
+                borderRadius: '6px',
+                fontFamily: 'Sarabun, sans-serif',
+                fontSize: '14px',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
+                minWidth: '150px',
+                pointerEvents: 'none',
+                display: 'none',
+                transition: 'opacity 0.2s ease'
+            });
+            document.body.appendChild(tooltip);
+
+            // Legend
+            const legendDiv = document.querySelector('[style*="position: absolute; bottom: 10px; left: 10px;"]');
+            legendDiv.innerHTML = `
+                <div><span style="display:inline-block; width: 12px; height: 12px; background-color: red; margin-right: 5px;"></span>Operator</div>
+                <div><span style="display:inline-block; width: 12px; height: 12px; background-color: blue; margin-right: 5px;"></span>Robot</div>
+                <div><span style="display:inline-block; width: 12px; height: 12px; background-color: black; margin-right: 5px;"></span>Connector Path</div>
+                <div style="margin-top: 10px;"><b>Consequence Types:</b></div>
+                <div><span style="display:inline-block; width: 12px; height: 12px; background-color: rgba(255, 0, 0, 0.1); margin-right: 5px;"></span>C1: Easy nav (1) + Low exposure (1)</div>
+                <div><span style="display:inline-block; width: 12px; height: 12px; background-color: rgba(255, 255, 0, 0.1); margin-right: 5px;"></span>C2: Hard nav (0.1) + Low exposure (1)</div>
+                <div><span style="display:inline-block; width: 12px; height: 12px; background-color: rgba(0, 255, 0, 0.1); margin-right: 5px;"></span>C3: Easy nav (1) + High exposure (0.1)</div>
+                <div><span style="display:inline-block; width: 12px; height: 12px; background-color: rgba(0, 0, 255, 0.1); margin-right: 5px;"></span>C4: Hard nav (0.1) + High exposure (0.1)</div>
+            `;
+
+            // Tooltip event handlers
+            canvas.addEventListener('mousemove', function(evt) {
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = evt.clientX - rect.left;
+                const mouseY = evt.clientY - rect.top;
+                
+                // Check for robot hover
+                let closestRobot = null;
+                let minDistance = Infinity;
+                
+                robots.forEach((robot, index) => {
+                    const dx = mouseX - robot.x;
+                    const dy = mouseY - robot.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < 20 && distance < minDistance) {
+                        minDistance = distance;
+                        closestRobot = { robot, index };
+                    }
+                });
+
+                // Check for operator hover
+                const operatorDistance = Math.sqrt(Math.pow(mouseX - operator.x, 2) + Math.pow(mouseY - operator.y, 2));
+                
+                if (operatorDistance < 15) {
+                    const stakeLevel = window.location.href.includes('highStake') ? 'high' : 'low';
+                    tooltip.innerHTML = `
+                        <div style="font-weight:700;">Operator State</div>
+                        <div>Stakes: ${stakeLevel}</div>
+                        <div>Profile: ${profileSettings.type || 'balanced'}</div>
+                        <div>Traversability Need: ${n_traversability.toFixed(2)}</div>
+                        <div>Visibility Need: ${n_visibility.toFixed(2)}</div>
+                    `;
+                    tooltip.style.display = 'block';
+                    return;
+                }
+
+                if (closestRobot) {
+                    const { robot, index } = closestRobot;
+                    tooltip.innerHTML = updateRobotTooltip(robot, index);
+                    
+                    // Position tooltip
+                    let tooltipX = robot.x + 20;
+                    let tooltipY = robot.y - tooltip.offsetHeight / 2;
+                    
+                    if (tooltipX + tooltip.offsetWidth > canvasWidth) {
+                        tooltipX = robot.x - tooltip.offsetWidth - 20;
+                    }
+                    
+                    tooltipY = Math.max(10, Math.min(canvasHeight - tooltip.offsetHeight - 10, tooltipY));
+                    
+                    tooltip.style.left = `${rect.left + tooltipX}px`;
+                    tooltip.style.top = `${rect.top + tooltipY}px`;
+                    tooltip.style.display = 'block';
+                } else {
+                    tooltip.style.display = 'none';
+                }
+            });
+
+            canvas.addEventListener('mouseleave', function() {
+                tooltip.style.display = 'none';
+            });
+        }
+
+        function updateRobotTooltip(robot, index) {
+            const state = calculateRobotState(robot);
+            return `
+                <div style="font-weight:700;margin-bottom:4px;">Robot ${index + 1}</div>
+                <div>C1: ${robot.consequences.C1}% (Easy/Low)</div>
+                <div>C2: ${robot.consequences.C2}% (Hard/Low)</div>
+                <div>C3: ${robot.consequences.C3}% (Easy/High)</div>
+                <div>C4: ${robot.consequences.C4}% (Hard/High)</div>
+                <div style="margin-top:4px;">Traversability: ${state.traversability.toFixed(2)}</div>
+                <div>Visibility: ${state.visibility.toFixed(2)}</div>
+            `;
+        }
+
+        // ========== DATA MANAGEMENT ==========
+        let userResponses = [];
+        let trialID = 1;
+
+        function recordResponse(choice, time) {
+            const robotStates = robots.map(robot => calculateRobotState(robot));
+            
+            userResponses.push({
+                ID: trialID++,
+                choice: parseInt(choice.replace('robot', '')),
+                timeElapsed: time,
+                n_traversability: n_traversability,
+                n_visibility: n_visibility,
+                stakes: window.location.href.includes('highStake') ? 'high' : 'low',
+                profile: profileSettings.type || 'balanced',
+                
+                // Robot data
+                robots: robots.map((robot, i) => ({
+                    C1: calculateConsequenceValue(robot, 'C1'),
+                    C2: calculateConsequenceValue(robot, 'C2'),
+                    C3: calculateConsequenceValue(robot, 'C3'),
+                    C4: calculateConsequenceValue(robot, 'C4'),
+                    traversability: robotStates[i].traversability,
+                    visibility: robotStates[i].visibility
+                }))
+            });
+            
+            localStorage.setItem('userResponses', JSON.stringify(userResponses));
+        }
+
+        function convertToCSV(responses) {
+            const header = "ID,choice,stakes,C11,C12,C13,C14,C21,C22,C23,C24,C31,C32,C33,C34,Operator_traversability,Operator_visibility,robot1_traversability,robot1_visibility,robot2_traversability,robot2_visibility,robot3_traversability,robot3_visibility,profile,timeElapsed\n";
+            
+            let csv = header;
+            responses.forEach(response => {
+                csv += [
+                    response.ID,
+                    response.choice,
+                    response.stakes,
+                    response.robots[0].C1, response.robots[0].C2, response.robots[0].C3, response.robots[0].C4,
+                    response.robots[1].C1, response.robots[1].C2, response.robots[1].C3, response.robots[1].C4,
+                    response.robots[2].C1, response.robots[2].C2, response.robots[2].C3, response.robots[2].C4,
+                    response.n_traversability,
+                    response.n_visibility,
+                    response.robots[0].traversability, response.robots[0].visibility,
+                    response.robots[1].traversability, response.robots[1].visibility,
+                    response.robots[2].traversability, response.robots[2].visibility,
+                    response.profile,
+                    response.timeElapsed
+                ].join(',') + '\n';
+            });
+            
+            return csv;
+        }
+
+        function downloadCSV(filename = 'user_responses.csv') {
+            const csvData = convertToCSV(userResponses);
+            const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        // ========== EVENT HANDLERS ==========
+        function setupEventListeners() {
+            // Radio button selection
+            document.querySelectorAll('input[type="radio"][name="robot"]').forEach(radioButton => {
+                radioButton.addEventListener('change', function() {
+                    const startTime = performance.now();
+                    const choice = this.value;
+
+                    setTimeout(() => {
+                        const endTime = performance.now();
+                        recordResponse(choice, endTime - startTime);
+                    }, 500);
+                });
+            });
+
+            // Next button
+            document.querySelector('.next-button').addEventListener('click', function(event) {
+                event.preventDefault();
+                
+                if (!document.querySelector('input[name="robot"]:checked')) {
+                    alert('Please select a robot path before continuing');
+                    return;
+                }
+                
+                let currentCount = parseInt(localStorage.getItem('count')) || 1;
+                
+                if (currentCount >= 30) {
+                    if (userResponses.length > 0) {
+                        const now = new Date();
+                        const filename = `${now.toISOString().slice(0, 10)}-${now.toTimeString().slice(0, 8).replace(/:/g, '')}-${trialID - 1}-Bounding_Overwatch.csv`;
+                        downloadCSV(filename);
+                        localStorage.removeItem('userResponses');
+                        userResponses = [];
+                    }
+                    
+                    localStorage.setItem('count', 1);
+                    window.location.href = "BO_home_page.html";
+                } else {
+                    // Alternate between high and low stakes pages
+                    const nextPage = window.location.href.includes('highStake') ? 
+                        "BO_mission_lowStake.html" : "BO_mission_highStake.html";
+                    window.location.href = nextPage;
+                }
+            });
+        }
+
+        // ========== MAIN EXECUTION ==========
+        window.onload = function() {
+            initializeTracking();
+            generateMap();
+            generateRobots(3);
+            setupTooltips();
+            setupEventListeners();
+            redrawCanvas();
+            
+            // Load any existing responses
+            const storedResponses = localStorage.getItem('userResponses');
+            if (storedResponses) {
+                userResponses = JSON.parse(storedResponses);
+                trialID = userResponses.length > 0 ? Math.max(...userResponses.map(r => r.ID)) + 1 : 1;
+            }
+        };
+        </script>
     </div>
 </div>

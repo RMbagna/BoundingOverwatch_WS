@@ -122,55 +122,7 @@
         </div>
 
 <script>
-    // Initialize tracking when page loads
-    window.onload = function() {
-        // Reset tracker if starting fresh
-        if(!localStorage.getItem('count')) {
-            localStorage.setItem('count', '1');
-            document.getElementById('tracker').innerText = 'Tracker: 1/30';
-        }
-        
-        // Clear any old responses
-        localStorage.removeItem('userResponses');
-    };
-
-    // Generate a unique session ID
-    function generateSessionID() {
-        return 'session_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
-    }
-
-    // Initialize tracking when page loads
-    window.onload = function() {
-        // Reset tracker and generate new session ID if starting fresh
-        if(!localStorage.getItem('sessionID')) {
-            localStorage.setItem('sessionID', generateSessionID());
-            localStorage.setItem('count', '1');
-            document.getElementById('tracker').innerText = 'Tracker: 1/30';
-        }
-        
-        // Clear any old responses for this session
-        localStorage.removeItem('userResponses');
-    };
-
-    // Handle quit button click
-    document.querySelector('.QuitButton').addEventListener('click', function() {
-        resetSession();
-    });
-
-    // Handle switch button click
-    document.getElementById('switchButton').addEventListener('click', function() {
-        resetSession();
-    });
-
-    function resetSession() {
-        // Clear session data
-        localStorage.removeItem('sessionID');
-        localStorage.removeItem('count');
-        localStorage.removeItem('userResponses');
-        localStorage.removeItem('selectedProfile');
-    }
-
-    // Profile settings - will be stored in localStorage
+    // ==================== Initialization ====================
     const PROFILE_SETTINGS = {
         steady: {
             L_traversability: 0.3,
@@ -189,24 +141,69 @@
         }
     };
 
-    // Handle profile selection
+    // ==================== Static Structures ====================
+    // (PROFILE_SETTINGS could also go here since it's constant data)
+
+    // ==================== UI & Interaction ====================
+    // Profile selection handler
     document.querySelectorAll('input[name="profile"]').forEach(radio => {
         radio.addEventListener('change', function() {
-            const profileType = this.value.replace('profile', ''); // "1", "2", or "3"
+            const profileType = this.value.replace('profile', '');
             const profileKey = ['steady', 'balanced', 'reactive'][parseInt(profileType)-1];
-            
-            // Store selected profile in localStorage
-            localStorage.setItem('selectedProfile', JSON.stringify(PROFILE_SETTINGS[profileKey]));
+            const profileData = {
+                type: profileKey,
+                L_traversability: PROFILE_SETTINGS[profileKey].L_traversability,
+                L_visibility: PROFILE_SETTINGS[profileKey].L_visibility
+            };
+            localStorage.setItem('selectedProfile', JSON.stringify(profileData));
         });
     });
 
-    // Next button handler
+    // Next button validation
     document.querySelector('.next-button').addEventListener('click', function(e) {
         if (!document.querySelector('input[name="profile"]:checked')) {
             e.preventDefault();
             alert('Please select an operating style before continuing');
         }
     });
+
+    // ==================== Data Management ====================
+    function generateSessionID() {
+        return 'session_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+    }
+
+    function resetSession() {
+        // Clear session data
+        localStorage.removeItem('sessionID');
+        localStorage.removeItem('count');
+        localStorage.removeItem('userResponses');
+        localStorage.removeItem('selectedProfile');
+    }
+
+    // ==================== Event Handlers ====================
+    // Quit button handler
+    document.querySelector('.QuitButton').addEventListener('click', function() {
+        resetSession();
+    });
+
+    // Switch button handler
+    document.getElementById('switchButton').addEventListener('click', function() {
+        resetSession();
+    });
+
+    // ==================== Main Execution ====================
+    // Initialize tracking when page loads
+    window.onload = function() {
+        // Reset tracker and generate new session ID if starting fresh
+        if(!localStorage.getItem('sessionID')) {
+            localStorage.setItem('sessionID', generateSessionID());
+            localStorage.setItem('count', '1');
+            document.getElementById('tracker').innerText = 'Tracker: 1/30';
+        }
+        
+        // Clear any old responses for this session
+        localStorage.removeItem('userResponses');
+    };
 </script>
     </div>
 </div>
