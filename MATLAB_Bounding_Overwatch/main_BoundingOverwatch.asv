@@ -71,8 +71,11 @@ try
             
             % Extract attribute weights
             beta_weights = [
-                params.b_traversability;
-                params.b_visibility;
+                params.b_energy;
+                params.b_pace;
+                params.b_safety;
+                params.b_reliability;
+                params.b_intelligence
             ];
             
             % Get initial preferences from ASCs

@@ -484,6 +484,15 @@
         // ========== TOOLTIPS & UI ==========
         function setupTooltips() {
             // Operator tooltip
+            // Commented out the original tooltip code for operator
+            //     <div class="tooltip-row">
+            //         <span class="tooltip-label">Current Traversability:</span>
+            //         <span class="tooltip-value" id="opTravState">${a_traversability.toFixed(2)}</span>
+            //     </div>
+            //     <div class="tooltip-row">
+            //         <span class="tooltip-label">Current Visibility:</span>
+            //         <span class="tooltip-value" id="opVisState">${a_visibility.toFixed(2)}</span>
+            //     </div>
             const operatorTooltip = document.createElement('div');
             operatorTooltip.className = 'tooltip';
             operatorTooltip.innerHTML = `
@@ -496,14 +505,7 @@
                     <span class="tooltip-label">Visibility Need:</span>
                     <span class="tooltip-value" id="opVisNeed">${n_visibility.toFixed(2)}</span>
                 </div>
-                <div class="tooltip-row">
-                    <span class="tooltip-label">Current Traversability:</span>
-                    <span class="tooltip-value" id="opTravState">${a_traversability.toFixed(2)}</span>
-                </div>
-                <div class="tooltip-row">
-                    <span class="tooltip-label">Current Visibility:</span>
-                    <span class="tooltip-value" id="opVisState">${a_visibility.toFixed(2)}</span>
-                </div>
+                
             `;
             document.body.appendChild(operatorTooltip);
 
@@ -603,6 +605,9 @@
                 tooltip.style.display = 'none';
             });
         }
+        // Commented out the original tooltip code for Robot
+        // <div style="margin-top:4px;">Traversability: ${state.traversability.toFixed(2)}</div>
+        //        <div>Visibility: ${state.visibility.toFixed(2)}</div>
 
         function updateRobotTooltip(robot, index) {
             const state = calculateRobotState(robot);
@@ -612,8 +617,7 @@
                 <div>C2: ${robot.consequences.C2}% (Hard/Low)</div>
                 <div>C3: ${robot.consequences.C3}% (Easy/High)</div>
                 <div>C4: ${robot.consequences.C4}% (Hard/High)</div>
-                <div style="margin-top:4px;">Traversability: ${state.traversability.toFixed(2)}</div>
-                <div>Visibility: ${state.visibility.toFixed(2)}</div>
+                
             `;
         }
 
