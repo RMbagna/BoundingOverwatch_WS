@@ -1,5 +1,12 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Main Simulation Script for BoundingOverwatch Project with R Integration
+% DFT Parameters:
+% phi1 - sensitivity to attribute differences (typically 0.5-2)
+% phi2 - memory/feedback strength (0-1)
+% tau - decision time steps (integer > 0)
+% error_sd - noise standard deviation (σ_ε)
+% beta - [2×1] attribute weights from R estimation
+% w - [2×1] attention weights (default [0.5;0.5])
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 clc;
 clear all;
@@ -14,7 +21,7 @@ robotChoice_Data = readtable('G:\My Drive\myResearch\Research Experimentation\Ap
 disp('User robot choice data imported successfully.');
 
 % Extract and organize robot attributes for all three alternatives
-
+attributes = {'Visibility', 'Traversability'};
 
 % Extract choice data and other metadata
 choices = robotChoice_Data.choice;
@@ -64,8 +71,8 @@ try
             params = jsondecode(jsonText);
             
             % Extract parameters with validation
-            phi1 = validateParam(params, 'phi1', 0.5);
-            phi2 = validateParam(params, 'phi2', 0.8);
+            phi1 = max(0, validateParam(params, 'phi1', 0.5)); % Ensure non-negative
+            phi2 = min(max(0, validateParam(params, 'phi2', 0.8)), 1); % Constrain 0-1
             tau = 1 + exp(validateParam(params, 'timesteps', 0.5));
             error_sd = validateParam(params, 'error_sd', 0.1);
             
@@ -77,10 +84,10 @@ try
             
             % Get initial preferences from ASCs
             initial_P = [
-                params.asc_1;
-                params.asc_2;
-                params.asc_3;
-                0  % Neutral alternative has 0 initial preference
+                validateParam(params, 'asc_1', 0);
+                validateParam(params, 'asc_2', 0);
+                validateParam(params, 'asc_3', 0);
+                0  % Neutral alternative
             ];
             
             disp('Estimated Parameters:');
@@ -109,25 +116,24 @@ end
 current_trial = 1; % Analyze first trial (can be looped later)
 
 % Create M matrix from current trial's attributes
+attributes = {'Visibility', 'Traversability'};
 M = [
-    robotChoice_Data.vis1(current_trial), ...
-    robotChoice_Data.trav1(current_trial); ...
-       
-    robotChoice_Data.vis2(current_trial), ...
-    robotChoice_Data.trav2(current_trial); ...
-    
-    robotChoice_Data.vis3(current_trial), ...
-    robotChoice_Data.trav3(current_trial); ...
-    
-    0.5*ones(1,2) % Neutral alternative
+    robotChoice_Data.vis1(current_trial), robotChoice_Data.trav1(current_trial);
+    robotChoice_Data.vis2(current_trial), robotChoice_Data.trav2(current_trial);
+    robotChoice_Data.vis3(current_trial), robotChoice_Data.trav3(current_trial);
+    0.5, 0.5 % Neutral alternative
 ];
 
 % Normalize beta weights
-beta = beta_weights ./ sum(abs(beta_weights));
+beta = beta_weights ./ sum(abs(beta_weights)); 
+beta = beta'; % Transpose to make it 1×2 for proper multiplication
 
 % Calculate DFT dynamics with initial preferences
-[E_P, V_P, probs, P_tau] = calculateDFTdynamics(...
-    phi1, phi2, tau, error_sd, beta, M, initial_P);
+if ~exist('w','var') || isempty(w)
+    w = [0.5; 0.5]; % Default equal weights for visibility/traversability
+end
+[E_P, V_P, choice_probs, P_tau] = calculateDFTdynamics(...
+    phi1, phi2, tau, error_sd, beta, M, initial_P,w);
 
 % Display results
 disp('=== Current Trial Analysis ===');
@@ -140,10 +146,21 @@ disp(array2table(M, ...
     'RowNames', {'Robot1','Robot2','Robot3','Neutral'}, ...
     'VariableNames', attributes));
 
+% Display DFT results with prediction
 disp('DFT Results:');
-disp(['E_P: ', num2str(E_P')]);
-disp(['Choice probabilities: ', num2str(probs')]);
+disp(['E_P: ', num2str(E_P', '%.2f  ')]);
+disp(['Choice probabilities: ', num2str(choice_probs', '%.3f  ')]);
+[~, predicted_choice] = max(choice_probs); % Get index of highest probability
+disp(['Predicted choice: Robot ', num2str(predicted_choice)]);
 disp(['Actual choice: Robot ', num2str(choices(current_trial))]);
+disp(' ');
+
+% Display match/mismatch
+if predicted_choice == choices(current_trial)
+    disp('✓ Prediction matches actual choice');
+else
+    disp('✗ Prediction differs from actual choice');
+end
 
 % Plot preference evolution
 figure;
@@ -153,13 +170,14 @@ ylabel('Preference Strength');
 legend({'Robot1','Robot2','Robot3','Neutral'});
 title(sprintf('Preference Evolution (Trial %d)', current_trial));
 grid on;
-
+%{
 %% Step 4: Output Results
 disp('Saving results to CSV...');
-output_table = table(E_P, V_P, P_final, ...
+output_table = table(E_P, V_P, P_tau(end,:)', ...
                      'VariableNames', {'ExpectedPreference', 'VariancePreference', 'FinalPreferences'});
 writetable(output_table, 'results.csv');
 disp('Results saved successfully!');
+%}
 %% Helper Functions
 function param = validateParam(params, name, default)
     if isfield(params, name) && isnumeric(params.(name))

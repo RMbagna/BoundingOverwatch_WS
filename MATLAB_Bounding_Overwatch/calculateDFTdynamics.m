@@ -1,4 +1,4 @@
-function [E_P, V_P, choice_probs, P_tau] = calculateDFTdynamics(phi1, phi2, tau, epsilon, beta, M, initial_P, w)
+function [E_P, V_P, choice_probs, P_tau] = calculateDFTdynamics(phi1, phi2, tau, epsilon, beta, M, initial_P,w)
     % Inputs:
     % phi1 - sensitivity parameter
     % phi2 - memory parameter
@@ -28,7 +28,7 @@ function [E_P, V_P, choice_probs, P_tau] = calculateDFTdynamics(phi1, phi2, tau,
     %% Core DFT Calculations
     
     % 1. Scale attributes by beta coefficients
-    M_scaled = M .* beta;
+    M_scaled = M * diag(beta);
     
     % 2. Create contrast matrix C (J×J)
     C = eye(J) - ones(J)/J;
@@ -53,21 +53,28 @@ function [E_P, V_P, choice_probs, P_tau] = calculateDFTdynamics(phi1, phi2, tau,
     Phi = Phi_part * (M_scaled' * C') + (epsilon^2 * eye(J));
     
     %% Preference State Evolution
-    
+    [J, ~] = size(M);  % J = number of alternatives (must match initial_P)
+
     % 7. Expected preference after τ steps (ξ)
     I = eye(J);
     if phi2 == 0 % No memory case
         E_P = tau * mu + initial_P;
         V_P = tau * Phi;
     else
-        E_P = (I - S) \ (I - S^tau) * mu + S^tau * initial_P;
-        
-        % 8. Preference covariance (Ω)
-        V_P = zeros(J);
-        for r = 0:(tau-1)
-            V_P = V_P + (S^r) * Phi * (S')^r;
-        end
+    % Ensure initial_P matches J (pad with zeros if needed)
+    if length(initial_P) < J
+        initial_P = [initial_P; zeros(J - length(initial_P), 1)];
     end
+    
+    % Corrected calculation
+    E_P = (I - S) \ ((I - S^tau) * mu) + S^tau * initial_P;
+    
+    % 8. Preference covariance (Ω)
+    V_P = zeros(J);
+    for r = 0:(tau-1)
+        V_P = V_P + (S^r) * Phi * (S')^r;
+    end
+end
     
     % 9. Simulate full preference state evolution
     P_tau = zeros(J, tau+1);
@@ -94,6 +101,8 @@ function [E_P, V_P, choice_probs, P_tau] = calculateDFTdynamics(phi1, phi2, tau,
     else
         % MVN integration for larger J (requires stats toolbox)
         try
+            % Add small diagonal noise to ensure positive definiteness
+            V_P_stable = V_P + 1e-6 * eye(size(V_P));
             R = chol(V_P); % Cholesky decomposition
             Z = repmat(E_P,1,1e5) + R'*randn(J,1e5);
             [~,maxIdx] = max(Z);

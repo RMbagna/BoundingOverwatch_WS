@@ -5,7 +5,7 @@ Please acknowledge the use of Apollo by citing Hess & Palma (2019)
 
 Model name                                  : DFT_Bounding_Overwatch
 Model description                           : DFT model on Bounding Overwatch SP25 data
-Model run at                                : 2025-04-25 20:53:56.574402
+Model run at                                : 2025-04-25 19:58:37.833194
 Estimation method                           : bfgs
 Model diagnosis                             : successful convergence
 Optimisation diagnosis                      : Saddle point found
@@ -31,10 +31,10 @@ AIC                                         :  233.69
 BIC                                         :  251.92 
 
 Estimated parameters                        : 7
-Time taken (hh:mm:ss)                       :  00:00:14.64 
-     pre-estimation                         :  00:00:6.15 
-     estimation                             :  00:00:4.46 
-     post-estimation                        :  00:00:4.03 
+Time taken (hh:mm:ss)                       :  00:00:15.6 
+     pre-estimation                         :  00:00:6.71 
+     estimation                             :  00:00:4.78 
+     post-estimation                        :  00:00:4.11 
 Iterations                                  :  12  
 
 Unconstrained optimisation.
