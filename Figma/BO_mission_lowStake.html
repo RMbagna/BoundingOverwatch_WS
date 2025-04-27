@@ -638,13 +638,23 @@
         //         <div>Visibility: ${state.visibility.toFixed(2)}</div>
 
         function updateRobotTooltip(robot, index) {
-            const state = calculateRobotState(robot);
+            const robotNeed = calculateRobotNeed(robot);
+
+            const M_C1 = (robotNeed.n_trav_robot * attributeQualities.C1.navigation) + 
+                        (robotNeed.n_vis_robot * attributeQualities.C1.exposure);
+            const M_C2 = (robotNeed.n_trav_robot * attributeQualities.C2.navigation) + 
+                        (robotNeed.n_vis_robot * attributeQualities.C2.exposure);
+            const M_C3 = (robotNeed.n_trav_robot * attributeQualities.C3.navigation) + 
+                        (robotNeed.n_vis_robot * attributeQualities.C3.exposure);
+            const M_C4 = (robotNeed.n_trav_robot * attributeQualities.C4.navigation) + 
+                        (robotNeed.n_vis_robot * attributeQualities.C4.exposure);
+
             return `
                 <div style="font-weight:700;margin-bottom:4px;">Robot ${index + 1}</div>
-                <div>C1: ${robot.consequences.C1}% (Easy/Low)</div>
-                <div>C2: ${robot.consequences.C2}% (Hard/Low)</div>
-                <div>C3: ${robot.consequences.C3}% (Easy/High)</div>
-                <div>C4: ${robot.consequences.C4}% (Hard/High)</div>                
+                <div>C1 (Easy/Low): ${M_C1.toFixed(2)}</div>
+                <div>C2 (Hard/Low): ${M_C2.toFixed(2)}</div>
+                <div>C3 (Easy/High): ${M_C3.toFixed(2)}</div>
+                <div>C4 (Hard/High): ${M_C4.toFixed(2)}</div>
             `;
         }
 
