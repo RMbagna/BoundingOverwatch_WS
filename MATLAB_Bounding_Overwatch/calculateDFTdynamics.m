@@ -13,6 +13,7 @@ function [E_P, V_P, choice_probs, P_tau] = calculateDFTdynamics(phi1, phi2, tau,
    tau = max(1, round(tau));  % ensure tau is integer
 
     [J, K] = size(M);
+    
     beta = beta(:)'; % Ensure beta is row vector
     
     if nargin < 7 || isempty(initial_P)
@@ -28,7 +29,7 @@ function [E_P, V_P, choice_probs, P_tau] = calculateDFTdynamics(phi1, phi2, tau,
     %% Core DFT Calculations
     
     % 1. Scale attributes by beta coefficients
-    M_scaled = M * diag(beta);
+    M_scaled = M .* diag(beta);
     
     % 2. Create contrast matrix C (J×J)
     C = eye(J) - ones(J)/J;

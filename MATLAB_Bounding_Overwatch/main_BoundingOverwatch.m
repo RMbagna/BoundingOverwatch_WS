@@ -17,14 +17,11 @@ clear all;
 % disp('User bias data imported successfully.');
 % taskChoice_Data = readtable('user_choices.csv'); % Replace with the path to your data file
 % disp('User task choice data imported successfully.');
-robotChoice_Data = readtable('G:\My Drive\myResearch\Research Experimentation\Apollo\apollo\data\Bounding_Overwatch_Data\testTrial_Bounding_Overwatch.csv');
+robotChoice_Data = readtable('G:\My Drive\myResearch\Research Experimentation\Apollo\apollo\data\Bounding_Overwatch_Data\HumanData_Bounding_Overwatch.csv');
 disp('User robot choice data imported successfully.');
 
-% Extract and organize robot attributes for all three alternatives
-attributes = {'Visibility', 'Traversability'};
-
 % Extract choice data and other metadata
-choices = robotChoice_Data.choice;
+choices = robotChoice_Data.Choice;
 participant_ids = robotChoice_Data.ID;
 
 %% Step 2: R Bridge Implementation
@@ -33,7 +30,7 @@ disp('Initializing R bridge...');
 % Configure paths
 rscript_path = 'C:\Program Files\R\R-4.4.2\bin\x64\Rscript.exe';
 r_script = 'G:\My Drive\myResearch\Research Experimentation\Apollo\apollo\example\DFT_Bounding_Overwatch.R';
-csvFile = 'G:\My Drive\myResearch\Research Experimentation\Apollo\apollo\data\Bounding_Overwatch_Data\testTrial_Bounding_Overwatch.csv';
+csvFile = 'G:\My Drive\myResearch\Research Experimentation\Apollo\apollo\data\Bounding_Overwatch_Data\HumanData_Bounding_Overwatch.csv';
 outputDir = 'G:\My Drive\myResearch\Research Experimentation\Apollo\apollo\Output_BoundingOverwatch';
 
 % Verify installations
@@ -78,8 +75,10 @@ try
             
             % Extract attribute weights
             beta_weights = [
-                params.b_traversability;
-                params.b_visibility;
+                params.b_attr1;
+                params.b_attr2;
+                params.b_attr3;
+                params.b_attr4
             ];
             
             % Get initial preferences from ASCs
@@ -87,7 +86,6 @@ try
                 validateParam(params, 'asc_1', 0);
                 validateParam(params, 'asc_2', 0);
                 validateParam(params, 'asc_3', 0);
-                0  % Neutral alternative
             ];
             
             disp('Estimated Parameters:');
@@ -107,22 +105,29 @@ catch ME
     disp('Error during R execution:');
     disp(getReport(ME, 'extended'));
     [phi1, phi2, tau, error_sd] = getFallbackParams();
-    beta_weights = [0.3; 0.2; 0.4; 0; 0.5]; % Default weights
-    initial_P = zeros(4,1); % Neutral initial preferences
+    beta_weights = [0.3; 0.2; 0.4; 0.5]; % Default weights
+    initial_P = zeros(3,1); % Neutral initial preferences
 end
 
 %% Step 3: MDFT Formulation to Calculate Preference Dynamics
 % (MDFT calculations based on estimated parameters)
-current_trial = 1; % Analyze first trial (can be looped later)
+current_trial = 2; % Analyze first trial (can be looped later)
 
 % Create M matrix from current trial's attributes
-attributes = {'Visibility', 'Traversability'};
+% C11-C14 are Robot 1 attributes
+% C21-C24 are Robot 2 attributes
+% C31-C34 are Robot 3 attributes
+
+num_attributes = 4; % Since you have 4 attributes per robot
+
 M = [
-    robotChoice_Data.vis1(current_trial), robotChoice_Data.trav1(current_trial);
-    robotChoice_Data.vis2(current_trial), robotChoice_Data.trav2(current_trial);
-    robotChoice_Data.vis3(current_trial), robotChoice_Data.trav3(current_trial);
-    0.5, 0.5 % Neutral alternative
+    robotChoice_Data.C11(current_trial), robotChoice_Data.C12(current_trial), robotChoice_Data.C13(current_trial), robotChoice_Data.C14(current_trial);
+    robotChoice_Data.C21(current_trial), robotChoice_Data.C22(current_trial), robotChoice_Data.C23(current_trial), robotChoice_Data.C24(current_trial);
+    robotChoice_Data.C31(current_trial), robotChoice_Data.C32(current_trial), robotChoice_Data.C33(current_trial), robotChoice_Data.C34(current_trial);
+    0.5*ones(1,num_attributes) % Neutral alternative
 ];
+
+attributes = {'Attr1', 'Attr2', 'Attr3', 'Attr4'}; % Update with meaningful names
 
 % Normalize beta weights
 beta = beta_weights ./ sum(abs(beta_weights)); 
@@ -130,7 +135,7 @@ beta = beta'; % Transpose to make it 1×2 for proper multiplication
 
 % Calculate DFT dynamics with initial preferences
 if ~exist('w','var') || isempty(w)
-    w = [0.5; 0.5]; % Default equal weights for visibility/traversability
+    w = ones(num_attributes, 1)/num_attributes; % Equal weights
 end
 [E_P, V_P, choice_probs, P_tau] = calculateDFTdynamics(...
     phi1, phi2, tau, error_sd, beta, M, initial_P,w);

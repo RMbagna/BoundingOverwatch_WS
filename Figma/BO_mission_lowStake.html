@@ -146,13 +146,13 @@
         // State variables
         let gridMap = [];
         let robots = [];
-        let n_traversability = 0.5; // Initial need values
-        let n_visibility = 0.5;
+        let n_traversability_operator = 0.5; // Initial need values
+        let n_visibility_operator = 0.5;
         let a_traversability = 0.5; // Initial state values
         let a_visibility = 0.5;
         const g_traversability = 1.0; // Goal values
         const g_visibility = 1.0;
-
+        
         // Attribute qualities for consequence types
         const attributeQualities = {
             C1: { navigation: 1.0, exposure: 1.0 },   // Easy nav, Low exposure
@@ -183,48 +183,66 @@
         }
 
         function generateMap() {
-            gridMap = [];
-            for (let r = 0; r < gridRows; r++) {
-                let row = [];
-                for (let c = 0; c < gridCols; c++) {
-                    row.push(Math.random() < 0.5);
-                }
-                gridMap.push(row);
-            }
+            gridMap = Array.from({ length: gridRows }, () =>
+                Array.from({ length: gridCols }, () => Math.random() < 0.5)
+            );
         }
 
         function generateRobots(numRobots) {
             const openCells = getOpenCells();
             robots = [];
-            
+
             for (let i = 0; i < numRobots && openCells.length; i++) {
                 const index = Math.floor(Math.random() * openCells.length);
                 const cell = openCells.splice(index, 1)[0];
-                
-                robots.push({
+
+                const robot = {
                     x: (cell.col + 0.5) * cellWidth,
                     y: (cell.row + 0.5) * cellHeight,
                     row: cell.row,
                     col: cell.col,
-                    consequences: generateConsequences(),
-                    id: i + 1
-                });
+                    id: i + 1,
+                    path: []  // ← NEW!
+                };
+
+                robot.path = generatePath(robot); // <-- precompute path once!
+
+                robots.push(robot);
             }
+
+            updateNeedStates(robots); // <-- THEN update operator need
+            robots.forEach(robot => {
+                robot.consequences = generateConsequences(robot);
+            });
         }
 
-        function generateConsequences() {
-            let percents = [];
-            for (let i = 0; i < 4; i++) {
-                percents.push(Math.random());
-            }
-            const sum = percents.reduce((a, b) => a + b, 0);
-            return {
-                C1: Math.round((percents[0]/sum)*100),
-                C2: Math.round((percents[1]/sum)*100),
-                C3: Math.round((percents[2]/sum)*100),
-                C4: Math.round((percents[3]/sum)*100)
+
+
+
+        function generateConsequences(robot) {
+            const state = calculateRobotState(robot);
+
+            const goodBias = (state.traversability + state.visibility) / 2; // Average of traversability and visibility
+            const badBias = 1.0 - goodBias;
+
+            // Randomized starting weights, biased
+            let weights = {
+                C1: Math.random() * goodBias,  // Good navigation, good exposure
+                C2: Math.random() * badBias,   // Hard navigation, good exposure
+                C3: Math.random() * goodBias,  // Good navigation, hard exposure
+                C4: Math.random() * badBias    // Hard navigation, hard exposure
             };
+
+            const sum = Object.values(weights).reduce((a, b) => a + b, 0);
+
+            let normalized = {};
+            for (let [key, val] of Object.entries(weights)) {
+                normalized[key] = Math.round((val / sum) * 100);
+            }
+
+            return normalized;
         }
+
 
         // ========== GRID & PATH FUNCTIONS ==========
         function getOpenCells() {
@@ -336,51 +354,79 @@
         }
 
         // ========== NEED CALCULATION FUNCTIONS ==========
+        function getTraversability(col, row) {
+            const pixelData = ctx.getImageData(col * cellWidth, row * cellHeight, 1, 1).data;
+            const [r, g, b] = pixelData;
+            if (r > 200 && g < 100 && b < 100) return 0.1;  // Red
+            if (r > 200 && g > 200 && b < 100) return 0.5;  // Yellow
+            if (g > 200 && r < 100 && b < 100) return 1.0;  // Green
+            return 0.5;  // Default
+        }
+
+        function getVisibility(col, row) {
+            const pixelData = ctx.getImageData(col * cellWidth, row * cellHeight, 1, 1).data;
+            const luminance = (0.299 * pixelData[0] + 0.587 * pixelData[1] + 0.114 * pixelData[2]) / 255;
+            return Math.max(0.1, luminance);
+        }
+
         function calculateRobotState(robot) {
-            const path = generatePath(robot);
-            const pathLength = path.length;
-            const maxPathLength = gridRows + gridCols;
-            
-            // Traversability based on path length (shorter = better)
-            const trav = 1 - (pathLength / maxPathLength);
-            
-            // Visibility based on distance from operator
-            const dx = robot.x - operator.x;
-            const dy = robot.y - operator.y;
-            const distance = Math.sqrt(dx*dx + dy*dy);
-            const maxDistance = Math.sqrt(gridCols*gridCols + gridRows*gridRows) * cellWidth;
-            const vis = 1 - (distance / maxDistance);
-            
-            return { traversability: trav, visibility: vis };
+            const path = robot.path;
+            if (!path || path.length === 0) return { traversability: 0.5, visibility: 0.5 };
+
+            let travSum = 0;
+            let visSum = 0;
+
+            path.forEach(cell => {
+                travSum += getTraversability(cell.col, cell.row);
+                visSum += getVisibility(cell.col, cell.row);
+            });
+
+            return {
+                traversability: travSum / path.length,
+                visibility: visSum / path.length
+            };
+        }
+
+
+        function calculateRobotNeed(robot) {
+            const state = calculateRobotState(robot);
+
+            let n_trav_robot = profileSettings.L_traversability * n_traversability_operator + (1.0 - state.traversability);
+            let n_vis_robot = profileSettings.L_visibility * n_visibility_operator + (1.0 - state.visibility);
+
+            return {
+                n_trav_robot: Math.max(0, Math.min(1, n_trav_robot)),
+                n_vis_robot: Math.max(0, Math.min(1, n_vis_robot))
+            };
         }
 
         function updateNeedStates(robots) {
-            // Calculate average current state across all robots
-            let avgTraversability = 0;
-            let avgVisibility = 0;
-            
-            robots.forEach(robot => {
-                const state = calculateRobotState(robot);
-                avgTraversability += state.traversability;
-                avgVisibility += state.visibility;
-            });
-            
-            a_traversability = avgTraversability / robots.length;
-            a_visibility = avgVisibility / robots.length;
-            
-            // Update needs using profile's L values
-            n_traversability = profileSettings.L_traversability * n_traversability + (g_traversability - a_traversability);
-            n_visibility = profileSettings.L_visibility * n_visibility + (g_visibility - a_visibility);
-            
-            // Clamp between 0 and 1
-            n_traversability = Math.max(0, Math.min(1, n_traversability));
-            n_visibility = Math.max(0, Math.min(1, n_visibility));
+            const stakes = window.location.href.includes('highStake') ? 'high' : 'low';
+
+            let a_traversability;
+            let a_visibility;
+
+            if (stakes === 'high') {
+                a_traversability = Math.random() * 0.3 + 0.1; // Random between 0.1 and 0.4
+                a_visibility = Math.random() * 0.3 + 0.1;
+            } else {
+                a_traversability = Math.random() * 0.3 + 0.5; // Random between 0.5 and 0.6
+                a_visibility = Math.random() * 0.3 + 0.5;
+            }
+
+            n_traversability_operator = profileSettings.L_traversability * (1.0 - a_traversability);
+            n_visibility_operator = profileSettings.L_visibility * (1.0 - a_visibility);
+
+            n_traversability_operator = Math.max(0, Math.min(1, n_traversability_operator));
+            n_visibility_operator = Math.max(0, Math.min(1, n_visibility_operator));
         }
+
+
 
         function calculateConsequenceValue(robot, consequenceType) {
             const state = calculateRobotState(robot);
             const q = attributeQualities[consequenceType];
-            return (n_traversability * q.navigation) + (n_visibility * q.exposure);
+            return (n_trav_robot * q.navigation) + (n_vis_robot * q.exposure);
         }
 
         // ========== DRAWING FUNCTIONS ==========
@@ -429,44 +475,26 @@
 
         function drawConnectorPath() {
             robots.forEach(robot => {
-                const path = generatePath(robot);
-                if (path.length > 0) {
+                const path = robot.path;
+                if (path && path.length > 0) {
                     ctx.beginPath();
                     ctx.moveTo(operator.x, operator.y);
-                    
+
                     for (let i = 0; i < path.length; i++) {
                         const cell = path[i];
                         const x = (cell.col + 0.5) * cellWidth;
                         const y = (cell.row + 0.5) * cellHeight;
-                        
-                        if (i === 0 || i === path.length - 1) {
-                            ctx.lineTo(x, y);
-                        } else {
-                            const prevCell = path[i-1];
-                            const nextCell = path[i+1] || path[i];
-                            
-                            ctx.quadraticCurveTo(
-                                ((prevCell.col + 0.5) * cellWidth + x) / 2, 
-                                ((prevCell.row + 0.5) * cellHeight + y) / 2,
-                                x, y
-                            );
-                        }
+
+                        ctx.lineTo(x, y);
                     }
-                    
-                    ctx.strokeStyle = 'black';
-                    ctx.lineWidth = 3;
-                    ctx.stroke();
-                } else {
-                    // Fallback to straight line if no path
-                    ctx.beginPath();
-                    ctx.moveTo(operator.x, operator.y);
-                    ctx.lineTo(robot.x, robot.y);
+
                     ctx.strokeStyle = 'black';
                     ctx.lineWidth = 3;
                     ctx.stroke();
                 }
             });
         }
+
 
         function redrawCanvas() {
             updateNeedStates(robots);
@@ -499,13 +527,13 @@
                 <div class="tooltip-header">OPERATOR STATE</div>
                 <div class="tooltip-row">
                     <span class="tooltip-label">Traversability Need:</span>
-                    <span class="tooltip-value" id="opTravNeed">${n_traversability.toFixed(2)}</span>
+                    <span class="tooltip-value" id="opTravNeed">${n_traversability_operator.toFixed(2)}</span>
                 </div>
                 <div class="tooltip-row">
                     <span class="tooltip-label">Visibility Need:</span>
-                    <span class="tooltip-value" id="opVisNeed">${n_visibility.toFixed(2)}</span>
+                    <span class="tooltip-value" id="opVisNeed">${n_visibility_operator.toFixed(2)}</span>
                 </div>
-                
+               
             `;
             document.body.appendChild(operatorTooltip);
 
@@ -572,8 +600,8 @@
                         <div style="font-weight:700;">Operator State</div>
                         <div>Stakes: ${stakeLevel}</div>
                         <div>Profile: ${profileSettings.type || 'balanced'}</div>
-                        <div>Traversability Need: ${n_traversability.toFixed(2)}</div>
-                        <div>Visibility Need: ${n_visibility.toFixed(2)}</div>
+                        <div>Traversability Need: ${n_traversability_operator.toFixed(2)}</div>
+                        <div>Visibility Need: ${n_visibility_operator.toFixed(2)}</div>
                     `;
                     tooltip.style.display = 'block';
                     return;
@@ -607,7 +635,7 @@
         }
         // Commented out the original tooltip code for Robot
         // <div style="margin-top:4px;">Traversability: ${state.traversability.toFixed(2)}</div>
-        //        <div>Visibility: ${state.visibility.toFixed(2)}</div>
+        //         <div>Visibility: ${state.visibility.toFixed(2)}</div>
 
         function updateRobotTooltip(robot, index) {
             const state = calculateRobotState(robot);
@@ -616,8 +644,7 @@
                 <div>C1: ${robot.consequences.C1}% (Easy/Low)</div>
                 <div>C2: ${robot.consequences.C2}% (Hard/Low)</div>
                 <div>C3: ${robot.consequences.C3}% (Easy/High)</div>
-                <div>C4: ${robot.consequences.C4}% (Hard/High)</div>
-                
+                <div>C4: ${robot.consequences.C4}% (Hard/High)</div>                
             `;
         }
 
@@ -632,17 +659,17 @@
                 ID: trialID++,
                 choice: parseInt(choice.replace('robot', '')),
                 timeElapsed: time,
-                n_traversability: n_traversability,
-                n_visibility: n_visibility,
+                n_traversability_operator: n_traversability_operator,
+                n_visibility_operator: n_visibility_operator,
                 stakes: window.location.href.includes('highStake') ? 'high' : 'low',
                 profile: profileSettings.type || 'balanced',
                 
                 // Robot data
                 robots: robots.map((robot, i) => ({
-                    C1: calculateConsequenceValue(robot, 'C1'),
-                    C2: calculateConsequenceValue(robot, 'C2'),
-                    C3: calculateConsequenceValue(robot, 'C3'),
-                    C4: calculateConsequenceValue(robot, 'C4'),
+                    C1: robot.consequences.C1,
+                    C2: robot.consequences.C2,
+                    C3: robot.consequences.C3,
+                    C4: robot.consequences.C4,
                     traversability: robotStates[i].traversability,
                     visibility: robotStates[i].visibility
                 }))
@@ -663,8 +690,8 @@
                     response.robots[0].C1, response.robots[0].C2, response.robots[0].C3, response.robots[0].C4,
                     response.robots[1].C1, response.robots[1].C2, response.robots[1].C3, response.robots[1].C4,
                     response.robots[2].C1, response.robots[2].C2, response.robots[2].C3, response.robots[2].C4,
-                    response.n_traversability,
-                    response.n_visibility,
+                    response.n_traversability_operator,
+                    response.n_visibility_operator,
                     response.robots[0].traversability, response.robots[0].visibility,
                     response.robots[1].traversability, response.robots[1].visibility,
                     response.robots[2].traversability, response.robots[2].visibility,
