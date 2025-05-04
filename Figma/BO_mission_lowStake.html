@@ -606,12 +606,31 @@
                     tooltip.style.display = 'block';
                     return;
                 }
+                let hoveredRobot = null;
+
+                // Check if mouse is close to any path segment
+                robots.forEach((robot, index) => {
+                    for (let i = 0; i < robot.path.length; i++) {
+                        const cell = robot.path[i];
+                        const cellX = (cell.col + 0.5) * cellWidth;
+                        const cellY = (cell.row + 0.5) * cellHeight;
+
+                        const dx = mouseX - cellX;
+                        const dy = mouseY - cellY;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+
+                        if (dist < 10) { // sensitivity threshold
+                            hoveredRobot = { robot, index };
+                            break;
+                        }
+                    }
+                });
 
                 if (closestRobot) {
                     const { robot, index } = closestRobot;
                     tooltip.innerHTML = updateRobotTooltip(robot, index);
                     
-                    // Position tooltip
+                    // Position tooltip near the robot
                     let tooltipX = robot.x + 20;
                     let tooltipY = robot.y - tooltip.offsetHeight / 2;
                     
@@ -624,9 +643,20 @@
                     tooltip.style.left = `${rect.left + tooltipX}px`;
                     tooltip.style.top = `${rect.top + tooltipY}px`;
                     tooltip.style.display = 'block';
+
+                } else if (hoveredRobot) {
+                    const { robot, index } = hoveredRobot;
+                    tooltip.innerHTML = updateRobotTooltip(robot, index);
+
+                    // Position tooltip near mouse cursor for paths
+                    tooltip.style.left = `${evt.clientX + 15}px`;
+                    tooltip.style.top = `${evt.clientY}px`;
+                    tooltip.style.display = 'block';
+
                 } else {
                     tooltip.style.display = 'none';
                 }
+
             });
 
             canvas.addEventListener('mouseleave', function() {
