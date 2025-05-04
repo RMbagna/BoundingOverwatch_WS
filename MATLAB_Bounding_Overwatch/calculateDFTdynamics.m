@@ -29,7 +29,7 @@ function [E_P, V_P, choice_probs, P_tau] = calculateDFTdynamics(phi1, phi2, tau,
     %% Core DFT Calculations
     
     % 1. Scale attributes by beta coefficients
-    M_scaled = M .* diag(beta);
+    M_scaled = M .* beta;
     
     % 2. Create contrast matrix C (J×J)
     C = eye(J) - ones(J)/J;

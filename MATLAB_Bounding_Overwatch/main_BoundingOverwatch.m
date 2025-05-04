@@ -17,12 +17,17 @@ clear all;
 % disp('User bias data imported successfully.');
 % taskChoice_Data = readtable('user_choices.csv'); % Replace with the path to your data file
 % disp('User task choice data imported successfully.');
-robotChoice_Data = readtable('G:\My Drive\myResearch\Research Experimentation\Apollo\apollo\data\Bounding_Overwatch_Data\HumanData_Bounding_Overwatch.csv');
+robotChoice_Data = readtable('G:\My Drive\myResearch\Research Experimentation\Apollo\apollo\data\Bounding_Overwatch_Data\testTrial_Bounding_Overwatch2.csv');
 disp('User robot choice data imported successfully.');
 
+% Convert column names to lowercase for R compatibility
+robotChoice_Data.Properties.VariableNames = lower(robotChoice_Data.Properties.VariableNames);
+% Overwrite the CSV file to match what R expects
+writetable(robotChoice_Data, csvFile);
+
 % Extract choice data and other metadata
-choices = robotChoice_Data.Choice;
-participant_ids = robotChoice_Data.ID;
+choices = robotChoice_Data.choice;
+participant_ids = robotChoice_Data.id;
 
 %% Step 2: R Bridge Implementation
 disp('Initializing R bridge...');
@@ -30,7 +35,7 @@ disp('Initializing R bridge...');
 % Configure paths
 rscript_path = 'C:\Program Files\R\R-4.4.2\bin\x64\Rscript.exe';
 r_script = 'G:\My Drive\myResearch\Research Experimentation\Apollo\apollo\example\DFT_Bounding_Overwatch.R';
-csvFile = 'G:\My Drive\myResearch\Research Experimentation\Apollo\apollo\data\Bounding_Overwatch_Data\HumanData_Bounding_Overwatch.csv';
+csvFile = 'G:\My Drive\myResearch\Research Experimentation\Apollo\apollo\data\Bounding_Overwatch_Data\testTrial_Bounding_Overwatch2.csv';
 outputDir = 'G:\My Drive\myResearch\Research Experimentation\Apollo\apollo\Output_BoundingOverwatch';
 
 % Verify installations
@@ -44,6 +49,11 @@ elseif ~isfolder(outputDir)
     warning('Output folder does not exist, creating: %s', outputDir);
     mkdir(outputDir);
 end
+
+% Show column names in the CSV to confirm R compatibility
+%disp('=== CSV column names being sent to R: ===');
+%opts = detectImportOptions(csvFile);
+%disp(opts.VariableNames);
 
 % Execute R with JSON output
 try
@@ -111,70 +121,66 @@ end
 
 %% Step 3: MDFT Formulation to Calculate Preference Dynamics
 % (MDFT calculations based on estimated parameters)
-current_trial = 2; % Analyze first trial (can be looped later)
-
 % Create M matrix from current trial's attributes
 % C11-C14 are Robot 1 attributes
 % C21-C24 are Robot 2 attributes
 % C31-C34 are Robot 3 attributes
+for current_trial = 1:height(robotChoice_Data)
+    num_attributes = 4;
 
-num_attributes = 4; % Since you have 4 attributes per robot
+    M = [
+        robotChoice_Data.c11(current_trial), robotChoice_Data.c12(current_trial), robotChoice_Data.c13(current_trial), robotChoice_Data.c14(current_trial);
+        robotChoice_Data.c21(current_trial), robotChoice_Data.c22(current_trial), robotChoice_Data.c23(current_trial), robotChoice_Data.c24(current_trial);
+        robotChoice_Data.c31(current_trial), robotChoice_Data.c32(current_trial), robotChoice_Data.c33(current_trial), robotChoice_Data.c34(current_trial)
+    ];
 
-M = [
-    robotChoice_Data.C11(current_trial), robotChoice_Data.C12(current_trial), robotChoice_Data.C13(current_trial), robotChoice_Data.C14(current_trial);
-    robotChoice_Data.C21(current_trial), robotChoice_Data.C22(current_trial), robotChoice_Data.C23(current_trial), robotChoice_Data.C24(current_trial);
-    robotChoice_Data.C31(current_trial), robotChoice_Data.C32(current_trial), robotChoice_Data.C33(current_trial), robotChoice_Data.C34(current_trial);
-    0.5*ones(1,num_attributes) % Neutral alternative
-];
+    M = M ./ sum(M, 2);  % Normalize each row of M
 
-attributes = {'Attr1', 'Attr2', 'Attr3', 'Attr4'}; % Update with meaningful names
+    attributes = {'Attr1', 'Attr2', 'Attr3', 'Attr4'};
+    beta = beta_weights ./ sum(abs(beta_weights));
+    beta = beta';
 
-% Normalize beta weights
-beta = beta_weights ./ sum(abs(beta_weights)); 
-beta = beta'; % Transpose to make it 1×2 for proper multiplication
+    if ~exist('w','var') || isempty(w)
+        w = ones(num_attributes, 1)/num_attributes;
+    end
 
-% Calculate DFT dynamics with initial preferences
-if ~exist('w','var') || isempty(w)
-    w = ones(num_attributes, 1)/num_attributes; % Equal weights
+    [E_P, V_P, choice_probs, P_tau] = calculateDFTdynamics(...
+        phi1, phi2, tau, error_sd, beta, M, initial_P, w);
+
+    % Display results for the trial
+    disp('=== Trial Analysis ===');
+    disp(['Trial: ', num2str(current_trial)]);
+    disp(['Participant: ', num2str(participant_ids(current_trial))]);
+    disp(['Actual Choice: Robot ', num2str(choices(current_trial))]);
+
+    disp('M matrix (alternatives × attributes):');
+    disp(array2table(M, ...
+        'RowNames', {'Robot1','Robot2','Robot3'}, ...
+        'VariableNames', attributes));
+
+    disp('DFT Results:');
+    disp(['E_P: ', num2str(E_P', '%.2f  ')]);
+    disp(['Choice probabilities: ', num2str(choice_probs', '%.3f  ')]);
+    [~, predicted_choice] = max(choice_probs);
+    disp(['Predicted choice: Robot ', num2str(predicted_choice)]);
+    disp(['Actual choice: Robot ', num2str(choices(current_trial))]);
+    disp(' ');
+
+    if predicted_choice == choices(current_trial)
+        disp('✓ Prediction matches actual choice');
+    else
+        disp('✗ Prediction differs from actual choice');
+    end
+
+    % Plot evolution
+    figure;
+    plot(0:tau, P_tau);
+    xlabel('Preference Step (\tau)');
+    ylabel('Preference Strength');
+    legend({'Robot1','Robot2','Robot3'});
+    title(sprintf('Preference Evolution (Trial %d)', current_trial));
+    grid on;
 end
-[E_P, V_P, choice_probs, P_tau] = calculateDFTdynamics(...
-    phi1, phi2, tau, error_sd, beta, M, initial_P,w);
-
-% Display results
-disp('=== Current Trial Analysis ===');
-disp(['Trial: ', num2str(current_trial)]);
-disp(['Participant: ', num2str(participant_ids(current_trial))]);
-disp(['Actual Choice: Robot ', num2str(choices(current_trial))]);
-
-disp('M matrix (alternatives × attributes):');
-disp(array2table(M, ...
-    'RowNames', {'Robot1','Robot2','Robot3','Neutral'}, ...
-    'VariableNames', attributes));
-
-% Display DFT results with prediction
-disp('DFT Results:');
-disp(['E_P: ', num2str(E_P', '%.2f  ')]);
-disp(['Choice probabilities: ', num2str(choice_probs', '%.3f  ')]);
-[~, predicted_choice] = max(choice_probs); % Get index of highest probability
-disp(['Predicted choice: Robot ', num2str(predicted_choice)]);
-disp(['Actual choice: Robot ', num2str(choices(current_trial))]);
-disp(' ');
-
-% Display match/mismatch
-if predicted_choice == choices(current_trial)
-    disp('✓ Prediction matches actual choice');
-else
-    disp('✗ Prediction differs from actual choice');
-end
-
-% Plot preference evolution
-figure;
-plot(0:tau, P_tau);
-xlabel('Preference Step (\tau)');
-ylabel('Preference Strength');
-legend({'Robot1','Robot2','Robot3','Neutral'});
-title(sprintf('Preference Evolution (Trial %d)', current_trial));
-grid on;
 %{
 %% Step 4: Output Results
 disp('Saving results to CSV...');
