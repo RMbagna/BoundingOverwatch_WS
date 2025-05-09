@@ -5,12 +5,12 @@ Please acknowledge the use of Apollo by citing Hess & Palma (2019)
 
 Model name                                  : DFT_Bounding_Overwatch
 Model description                           : DFT model on Bounding Overwatch data
-Model run at                                : 2025-05-09 14:21:08.534372
+Model run at                                : 2025-05-09 14:07:59.516786
 Estimation method                           : bfgs
 Model diagnosis                             : successful convergence
 Optimisation diagnosis                      : Saddle point found
      hessian properties                     : Some eigenvalues are positive and others negative
-     maximum eigenvalue                     : 0.001907
+     maximum eigenvalue                     : 0.217063
      reciprocal of condition number         : not calculated (Hessian is not negative definite)
 Number of individuals                       : 2
 Number of rows in database                  : 60
@@ -19,38 +19,38 @@ Number of modelled outcomes                 : 60
 Number of cores used                        :  4 
 Model without mixing
 
-LL(start)                                   : -132.53
+LL(start)                                   : -81.88
 LL at equal shares, LL(0)                   : -65.92
 LL at observed shares, LL(C)                : NA
-LL(final)                                   : -63.24
-Rho-squared vs equal shares                  :  0.0406 
-Adj.Rho-squared vs equal shares              :  -0.0959 
+LL(final)                                   : -63.88
+Rho-squared vs equal shares                  :  0.0309 
+Adj.Rho-squared vs equal shares              :  -0.1056 
 Rho-squared vs observed shares               :  Not applicable 
 Adj.Rho-squared vs observed shares           :  Not applicable 
-AIC                                         :  144.48 
-BIC                                         :  163.33 
+AIC                                         :  145.76 
+BIC                                         :  164.61 
 
 Estimated parameters                        : 9
-Time taken (hh:mm:ss)                       :  00:00:13.21 
-     pre-estimation                         :  00:00:3.96 
-     estimation                             :  00:00:5.61 
-     post-estimation                        :  00:00:3.64 
-Iterations                                  :  20  
+Time taken (hh:mm:ss)                       :  00:00:12.26 
+     pre-estimation                         :  00:00:3.97 
+     estimation                             :  00:00:4.67 
+     post-estimation                        :  00:00:3.62 
+Iterations                                  :  15  
 
 Unconstrained optimisation.
 
 Estimates:
              Estimate        s.e.   t.rat.(0)    Rob.s.e. Rob.t.rat.(0)
-asc_1          1.0988          NA          NA          NA            NA
-asc_2         -1.2563          NA          NA          NA            NA
-asc_3          0.0000          NA          NA          NA            NA
-b_attr1       -1.2315          NA          NA          NA            NA
-b_attr2       -1.2543          NA          NA          NA            NA
-b_attr3       -1.7222          NA          NA          NA            NA
-b_attr4        4.2191          NA          NA          NA            NA
-phi1           1.4903          NA          NA          NA            NA
-phi2          -0.3086          NA          NA          NA            NA
-error_sd       5.6641          NA          NA          NA            NA
+asc_1          0.0000          NA          NA          NA            NA
+asc_2         -1.3844          NA          NA          NA            NA
+asc_3         -0.2317          NA          NA          NA            NA
+b_attr1       -1.5187          NA          NA          NA            NA
+b_attr2       -1.4741          NA          NA          NA            NA
+b_attr3       -1.1097          NA          NA          NA            NA
+b_attr4        4.2727          NA          NA          NA            NA
+phi1          -0.6818          NA          NA          NA            NA
+phi2           0.1763          NA          NA          NA            NA
+error_sd       9.7464          NA          NA          NA            NA
 timesteps     10.0000          NA          NA          NA            NA
 
 
@@ -63,9 +63,9 @@ Percentage chosen when available 41.67   20 38.33
 
 
 Classical covariance matrix:
-            asc_1    asc_2  b_attr1  b_attr2  b_attr3  b_attr4     phi1
-asc_1          NA       NA       NA       NA       NA       NA       NA
+            asc_2    asc_3  b_attr1  b_attr2  b_attr3  b_attr4     phi1
 asc_2          NA       NA       NA       NA       NA       NA       NA
+asc_3          NA       NA       NA       NA       NA       NA       NA
 b_attr1        NA       NA       NA       NA       NA       NA       NA
 b_attr2        NA       NA       NA       NA       NA       NA       NA
 b_attr3        NA       NA       NA       NA       NA       NA       NA
@@ -74,8 +74,8 @@ phi1           NA       NA       NA       NA       NA       NA       NA
 phi2           NA       NA       NA       NA       NA       NA       NA
 error_sd       NA       NA       NA       NA       NA       NA       NA
              phi2 error_sd
-asc_1          NA       NA
 asc_2          NA       NA
+asc_3          NA       NA
 b_attr1        NA       NA
 b_attr2        NA       NA
 b_attr3        NA       NA
@@ -85,9 +85,9 @@ phi2           NA       NA
 error_sd       NA       NA
 
 Robust covariance matrix:
-               asc_1       asc_2     b_attr1     b_attr2     b_attr3
-asc_1             NA          NA          NA          NA          NA
+               asc_2       asc_3     b_attr1     b_attr2     b_attr3
 asc_2             NA          NA          NA          NA          NA
+asc_3             NA          NA          NA          NA          NA
 b_attr1           NA          NA          NA          NA          NA
 b_attr2           NA          NA          NA          NA          NA
 b_attr3           NA          NA          NA          NA          NA
@@ -96,8 +96,8 @@ phi1              NA          NA          NA          NA          NA
 phi2              NA          NA          NA          NA          NA
 error_sd          NA          NA          NA          NA          NA
              b_attr4        phi1        phi2    error_sd
-asc_1             NA          NA          NA          NA
 asc_2             NA          NA          NA          NA
+asc_3             NA          NA          NA          NA
 b_attr1           NA          NA          NA          NA
 b_attr2           NA          NA          NA          NA
 b_attr3           NA          NA          NA          NA
@@ -107,9 +107,9 @@ phi2              NA          NA          NA          NA
 error_sd          NA          NA          NA          NA
 
 Classical correlation matrix:
-            asc_1    asc_2  b_attr1  b_attr2  b_attr3  b_attr4     phi1
-asc_1          NA       NA       NA       NA       NA       NA       NA
+            asc_2    asc_3  b_attr1  b_attr2  b_attr3  b_attr4     phi1
 asc_2          NA       NA       NA       NA       NA       NA       NA
+asc_3          NA       NA       NA       NA       NA       NA       NA
 b_attr1        NA       NA       NA       NA       NA       NA       NA
 b_attr2        NA       NA       NA       NA       NA       NA       NA
 b_attr3        NA       NA       NA       NA       NA       NA       NA
@@ -118,8 +118,8 @@ phi1           NA       NA       NA       NA       NA       NA       NA
 phi2           NA       NA       NA       NA       NA       NA       NA
 error_sd       NA       NA       NA       NA       NA       NA       NA
              phi2 error_sd
-asc_1          NA       NA
 asc_2          NA       NA
+asc_3          NA       NA
 b_attr1        NA       NA
 b_attr2        NA       NA
 b_attr3        NA       NA
@@ -129,9 +129,9 @@ phi2           NA       NA
 error_sd       NA       NA
 
 Robust correlation matrix:
-               asc_1       asc_2     b_attr1     b_attr2     b_attr3
-asc_1             NA          NA          NA          NA          NA
+               asc_2       asc_3     b_attr1     b_attr2     b_attr3
 asc_2             NA          NA          NA          NA          NA
+asc_3             NA          NA          NA          NA          NA
 b_attr1           NA          NA          NA          NA          NA
 b_attr2           NA          NA          NA          NA          NA
 b_attr3           NA          NA          NA          NA          NA
@@ -140,8 +140,8 @@ phi1              NA          NA          NA          NA          NA
 phi2              NA          NA          NA          NA          NA
 error_sd          NA          NA          NA          NA          NA
              b_attr4        phi1        phi2    error_sd
-asc_1             NA          NA          NA          NA
 asc_2             NA          NA          NA          NA
+asc_3             NA          NA          NA          NA
 b_attr1           NA          NA          NA          NA
 b_attr2           NA          NA          NA          NA
 b_attr3           NA          NA          NA          NA
@@ -152,39 +152,39 @@ error_sd          NA          NA          NA          NA
 
  20 most extreme outliers in terms of lowest average per choice prediction:
   row Avg prob per choice
- <NA>           0.1131348
- <NA>           0.1323835
- <NA>           0.1432503
- <NA>           0.1513804
- <NA>           0.1845368
- <NA>           0.2065754
- <NA>           0.2103322
- <NA>           0.2194033
- <NA>           0.2323288
- <NA>           0.2350486
- <NA>           0.2786210
- <NA>           0.2913373
- <NA>           0.2926820
- <NA>           0.2943850
- <NA>           0.2966857
- <NA>           0.3014479
- <NA>           0.3045640
- <NA>           0.3051515
- <NA>           0.3183689
- <NA>           0.3186249
+ <NA>           0.1567055
+ <NA>           0.1671788
+ <NA>           0.1691268
+ <NA>           0.1739305
+ <NA>           0.1828511
+ <NA>           0.1881643
+ <NA>           0.2006039
+ <NA>           0.2012645
+ <NA>           0.2021700
+ <NA>           0.2053259
+ <NA>           0.2057874
+ <NA>           0.2216507
+ <NA>           0.3387510
+ <NA>           0.3413729
+ <NA>           0.3456525
+ <NA>           0.3502375
+ <NA>           0.3573905
+ <NA>           0.3644044
+ <NA>           0.3701497
+ <NA>           0.3736487
 
 Changes in parameter estimates from starting values:
               Initial    Estimate  Difference
-asc_1         0.00000      1.0988      1.0988
-asc_2         0.00000     -1.2563     -1.2563
-asc_3         0.00000      0.0000      0.0000
-b_attr1       0.09531     -1.2315     -1.3268
-b_attr2      -0.10536     -1.2543     -1.1489
-b_attr3       0.18232     -1.7222     -1.9045
-b_attr4       0.00000      4.2191      4.2191
-phi1          1.00000      1.4903      0.4903
-phi2          0.00000     -0.3086     -0.3086
-error_sd      0.30000      5.6641      5.3641
+asc_1         0.00000      0.0000      0.0000
+asc_2         0.00000     -1.3844     -1.3844
+asc_3         0.00000     -0.2317     -0.2317
+b_attr1       0.09531     -1.5187     -1.6140
+b_attr2      -0.10536     -1.4741     -1.3688
+b_attr3       0.18232     -1.1097     -1.2920
+b_attr4       0.00000      4.2727      4.2727
+phi1          1.00000     -0.6818     -1.6818
+phi2          0.00000      0.1763      0.1763
+error_sd      0.50000      9.7464      9.2464
 timesteps    10.00000     10.0000      0.0000
 
 Settings and functions used in model definition:
@@ -221,15 +221,15 @@ numerical second derivative of LL (using numDeriv)
 Scaling used in computing Hessian
 ---------------------------------
              Value
-asc_1    1.0987604
-asc_2    1.2562706
-b_attr1  1.2315067
-b_attr2  1.2542923
-b_attr3  1.7222188
-b_attr4  4.2191151
-phi1     1.4902647
-phi2     0.3086236
-error_sd 5.6640801
+asc_2    1.3843640
+asc_3    0.2316943
+b_attr1  1.5186555
+b_attr2  1.4741108
+b_attr3  1.1096587
+b_attr4  4.2727234
+phi1     0.6817648
+phi2     0.1762627
+error_sd 9.7464280
 
 
 apollo_probabilities
@@ -254,9 +254,8 @@ function (apollo_beta, apollo_inputs, functionality = "estimate")
             alt2 = asc_2, alt3 = asc_3), attrWeights = list(attr1 = exp(b_attr1), 
             attr2 = exp(b_attr2), attr3 = exp(b_attr3), attr4 = exp(b_attr4)), 
         attrScalings = 1, procPars = list(error_sd = pmax(0.01, 
-            pmin(1, error_sd)), timesteps = pmax(1, pmin(20000, 
-            timesteps)), phi1 = phi1, phi2 = phi2), panelData = TRUE, 
-        componentName = "BoundingOverwatchDFT")
+            pmin(1, error_sd)), timesteps = pmax(1, pmin(5, timesteps)), 
+            phi1 = phi1, phi2 = phi2), panelData = TRUE, componentName = "BoundingOverwatchDFT")
     P[["model"]] = apollo_dft(dft_settings, functionality)
     P = apollo_prepareProb(P, apollo_inputs, functionality)
     return(P)
