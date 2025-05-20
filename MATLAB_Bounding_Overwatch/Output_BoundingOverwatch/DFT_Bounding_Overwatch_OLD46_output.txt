@@ -1,0 +1,245 @@
+Model run by Ryan using Apollo 0.3.5 on R 4.4.2 for Windows.
+Please acknowledge the use of Apollo by citing Hess & Palma (2019)
+  DOI 10.1016/j.jocm.2019.100170
+  www.ApolloChoiceModelling.com
+
+Model name                                  : DFT_Bounding_Overwatch
+Model description                           : DFT model on Bounding Overwatch SP25 data
+Model run at                                : 2025-04-25 20:53:56.574402
+Estimation method                           : bfgs
+Model diagnosis                             : successful convergence
+Optimisation diagnosis                      : Saddle point found
+     hessian properties                     : Some eigenvalues are positive and others negative
+     maximum eigenvalue                     : 0.002093
+     reciprocal of condition number         : not calculated (Hessian is not negative definite)
+Number of individuals                       : 10
+Number of rows in database                  : 100
+Number of modelled outcomes                 : 100
+
+Number of cores used                        :  4 
+Model without mixing
+
+LL(start)                                   : -122.86
+LL at equal shares, LL(0)                   : -109.86
+LL at observed shares, LL(C)                : NA
+LL(final)                                   : -109.84
+Rho-squared vs equal shares                  :  2e-04 
+Adj.Rho-squared vs equal shares              :  -0.0636 
+Rho-squared vs observed shares               :  Not applicable 
+Adj.Rho-squared vs observed shares           :  Not applicable 
+AIC                                         :  233.69 
+BIC                                         :  251.92 
+
+Estimated parameters                        : 7
+Time taken (hh:mm:ss)                       :  00:00:14.64 
+     pre-estimation                         :  00:00:6.15 
+     estimation                             :  00:00:4.46 
+     post-estimation                        :  00:00:4.03 
+Iterations                                  :  12  
+
+Unconstrained optimisation.
+
+Estimates:
+                    Estimate        s.e.   t.rat.(0)    Rob.s.e. Rob.t.rat.(0)
+asc_1                 1.0737          NA          NA          NA            NA
+asc_2                 0.6200          NA          NA          NA            NA
+asc_3                 0.0000          NA          NA          NA            NA
+b_traversability      0.0000          NA          NA          NA            NA
+b_visibility         -2.0497          NA          NA          NA            NA
+phi1                 -0.1787          NA          NA          NA            NA
+phi2                  0.1916          NA          NA          NA            NA
+error_sd             30.8557          NA          NA          NA            NA
+timesteps           -10.5789          NA          NA          NA            NA
+
+
+Overview of choices for DFT model component :
+                                 alt1 alt2 alt3
+Times available                   100  100  100
+Times chosen                       34   34   32
+Percentage chosen overall          34   34   32
+Percentage chosen when available   34   34   32
+
+
+Classical covariance matrix:
+                    asc_1        asc_2 b_visibility         phi1         phi2
+asc_1                  NA           NA           NA           NA           NA
+asc_2                  NA           NA           NA           NA           NA
+b_visibility           NA           NA           NA           NA           NA
+phi1                   NA           NA           NA           NA           NA
+phi2                   NA           NA           NA           NA           NA
+error_sd               NA           NA           NA           NA           NA
+timesteps              NA           NA           NA           NA           NA
+                 error_sd    timesteps
+asc_1                  NA           NA
+asc_2                  NA           NA
+b_visibility           NA           NA
+phi1                   NA           NA
+phi2                   NA           NA
+error_sd               NA           NA
+timesteps              NA           NA
+
+Robust covariance matrix:
+                    asc_1        asc_2 b_visibility         phi1         phi2
+asc_1                  NA           NA           NA           NA           NA
+asc_2                  NA           NA           NA           NA           NA
+b_visibility           NA           NA           NA           NA           NA
+phi1                   NA           NA           NA           NA           NA
+phi2                   NA           NA           NA           NA           NA
+error_sd               NA           NA           NA           NA           NA
+timesteps              NA           NA           NA           NA           NA
+                 error_sd    timesteps
+asc_1                  NA           NA
+asc_2                  NA           NA
+b_visibility           NA           NA
+phi1                   NA           NA
+phi2                   NA           NA
+error_sd               NA           NA
+timesteps              NA           NA
+
+Classical correlation matrix:
+                    asc_1        asc_2 b_visibility         phi1         phi2
+asc_1                  NA           NA           NA           NA           NA
+asc_2                  NA           NA           NA           NA           NA
+b_visibility           NA           NA           NA           NA           NA
+phi1                   NA           NA           NA           NA           NA
+phi2                   NA           NA           NA           NA           NA
+error_sd               NA           NA           NA           NA           NA
+timesteps              NA           NA           NA           NA           NA
+                 error_sd    timesteps
+asc_1                  NA           NA
+asc_2                  NA           NA
+b_visibility           NA           NA
+phi1                   NA           NA
+phi2                   NA           NA
+error_sd               NA           NA
+timesteps              NA           NA
+
+Robust correlation matrix:
+                    asc_1        asc_2 b_visibility         phi1         phi2
+asc_1                  NA           NA           NA           NA           NA
+asc_2                  NA           NA           NA           NA           NA
+b_visibility           NA           NA           NA           NA           NA
+phi1                   NA           NA           NA           NA           NA
+phi2                   NA           NA           NA           NA           NA
+error_sd               NA           NA           NA           NA           NA
+timesteps              NA           NA           NA           NA           NA
+                 error_sd    timesteps
+asc_1                  NA           NA
+asc_2                  NA           NA
+b_visibility           NA           NA
+phi1                   NA           NA
+phi2                   NA           NA
+error_sd               NA           NA
+timesteps              NA           NA
+
+ 10 most extreme outliers in terms of lowest average per choice prediction:
+ ID Avg prob per choice
+  8           0.3290844
+  3           0.3307155
+  6           0.3327343
+  2           0.3336014
+  7           0.3338216
+  5           0.3339200
+  1           0.3339375
+  4           0.3341666
+  9           0.3356372
+ 10           0.3363263
+
+Changes in parameter estimates from starting values:
+                     Initial    Estimate  Difference
+asc_1                  0.000      1.0737      1.0737
+asc_2                  0.000      0.6200      0.6200
+asc_3                  0.000      0.0000      0.0000
+b_traversability       0.000      0.0000      0.0000
+b_visibility           1.000     -2.0497     -3.0497
+phi1                   1.000     -0.1787     -1.1787
+phi2                   0.000      0.1916      0.1916
+error_sd               1.000     30.8557     29.8557
+timesteps              1.000    -10.5789    -11.5789
+
+Settings and functions used in model definition:
+
+apollo_control
+--------------
+                       Value                                      
+modelName              "DFT_Bounding_Overwatch"                   
+modelDescr             "DFT model on Bounding Overwatch SP25 data"
+indivID                "id"                                       
+nCores                 "4"                                        
+outputDirectory        "Output_BoundingOverwatch/"                
+debug                  "FALSE"                                    
+workInLogs             "FALSE"                                    
+seed                   "13"                                       
+mixing                 "FALSE"                                    
+HB                     "FALSE"                                    
+noValidation           "FALSE"                                    
+noDiagnostics          "FALSE"                                    
+calculateLLC           "TRUE"                                     
+analyticHessian        "FALSE"                                    
+memorySaver            "FALSE"                                    
+panelData              "TRUE"                                     
+analyticGrad           "TRUE"                                     
+analyticGrad_manualSet "FALSE"                                    
+overridePanel          "FALSE"                                    
+preventOverridePanel   "FALSE"                                    
+noModification         "FALSE"                                    
+
+Hessian routines attempted
+--------------------------
+numerical second derivative of LL (using numDeriv)
+
+Scaling used in computing Hessian
+---------------------------------
+                  Value
+asc_1         1.0737328
+asc_2         0.6200463
+b_visibility  2.0497234
+phi1          0.1786705
+phi2          0.1916255
+error_sd     30.8557330
+timesteps    10.5789428
+
+
+apollo_probabilities
+----------------------
+function (apollo_beta, apollo_inputs, functionality = "estimate") 
+{
+    apollo_attach(apollo_beta, apollo_inputs)
+    on.exit(apollo_detach(apollo_beta, apollo_inputs))
+    P = list()
+    attrValues = list()
+    attrValues[["alt1"]] = list(visibility = vis1, traversability = trav1)
+    attrValues[["alt2"]] = list(visibility = vis2, traversability = trav2)
+    attrValues[["alt3"]] = list(visibility = vis3, traversability = trav3)
+    altStart = list()
+    altStart[["alt1"]] = asc_1
+    altStart[["alt2"]] = asc_2
+    altStart[["alt3"]] = asc_3
+    attrWeights = list(visibility = exp(b_visibility)/(exp(b_traversability) + 
+        exp(b_visibility)), traversability = exp(b_traversability)/(exp(b_traversability) + 
+        exp(b_visibility)))
+    procPars = list(error_sd = error_sd, timesteps = 1 + exp(timesteps), 
+        phi1 = phi1, phi2 = phi2)
+    dft_settings = list(alternatives = c(alt1 = 1, alt2 = 2, 
+        alt3 = 3), avail = list(alt1 = 1, alt2 = 1, alt3 = 1), 
+        choiceVar = choice, attrValues = list(alt1 = list(visibility = pmax(0.01, 
+            pmin(1, vis1)), traversability = pmax(0.01, pmin(1, 
+            trav1))), alt2 = list(visibility = pmax(0.01, pmin(1, 
+            vis2)), traversability = pmax(0.01, pmin(1, trav2))), 
+            alt3 = list(visibility = pmax(0.01, pmin(1, vis3)), 
+                traversability = pmax(0.01, pmin(1, trav3)))), 
+        altStart = altStart, attrWeights = attrWeights, attrScalings = 1, 
+        procPars = procPars)
+    print("dft_settings:")
+    print(dft_settings)
+    print("First few values of choice:")
+    print(head(choice))
+    print("First few values of vis1:")
+    print(head(vis1))
+    print("First few values of trav1:")
+    print(head(trav1))
+    P[["model"]] = apollo_dft(dft_settings, functionality)
+    P = apollo_panelProd(P, apollo_inputs, functionality)
+    P = apollo_prepareProb(P, apollo_inputs, functionality)
+    return(P)
+}

@@ -1,0 +1,710 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>main_BoundingOverwatch</title><meta name="generator" content="MATLAB 9.13"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2025-05-19"><meta name="DC.source" content="main_BoundingOverwatch.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#2">Step 1: Import CSV Data</a></li><li><a href="#3">Step 2: R Bridge Implementation</a></li><li><a href="#4">Step 3: MDFT Formulation to Calculate Preference Dynamics</a></li><li><a href="#5">Helper Functions</a></li></ul></div><pre class="codeinput"><span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+<span class="comment">% Main Simulation Script for BoundingOverwatch Project with R Integration</span>
+<span class="comment">% Randomly 10 trials is used to validate predictions</span>
+<span class="comment">% DFT Parameters:</span>
+<span class="comment">% phi1 - sensitivity to attribute differences (typically 0.5-2)</span>
+<span class="comment">% phi2 - memory/feedback strength (0-1)</span>
+<span class="comment">% tau - decision time steps (integer &gt; 0)</span>
+<span class="comment">% error_sd - noise standard deviation (&#963;_&#949;)</span>
+<span class="comment">% beta - attribute weights from R estimation</span>
+<span class="comment">% w -  attention weights (default [0.5;0.5])</span>
+<span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+clc;
+clear <span class="string">all</span>;
+</pre><h2 id="2">Step 1: Import CSV Data</h2><p>(reference apolloMain_5 amd apolloMain_6 as example for data manipulation) biasData = readtable('user_choices.csv'); % Replace with the path to your data file disp('User bias data imported successfully.'); taskChoice_Data = readtable('user_choices.csv'); % Replace with the path to your data file disp('User task choice data imported successfully.');</p><pre class="codeinput">robotChoice_Data = readtable(<span class="string">'G:\My Drive\myResearch\Research Experimentation\Apollo\apollo\data\Bounding_Overwatch_Data\HumanData_Bounding_Overwatch.csv'</span>);
+<span class="comment">% Convert all column headers to lowercase</span>
+robotChoice_Data.Properties.VariableNames = lower(robotChoice_Data.Properties.VariableNames);
+disp(<span class="string">'User robot choice data imported successfully.'</span>);
+
+<span class="comment">% Randomly select 10 rows (or all rows if fewer than 10)</span>
+numRows = height(robotChoice_Data);
+randomIndices = randperm(numRows, min(10, numRows));
+robotChoice_Data = robotChoice_Data(randomIndices, :);
+
+<span class="comment">% Extract robot state attributes dynamically</span>
+robot_states = struct();
+attributeSuffixes = {<span class="string">'traversability'</span>, <span class="string">'visibility'</span>}; <span class="comment">% No leading underscores</span>
+<span class="keyword">for</span> i = 1:3
+    <span class="keyword">for</span> attr = attributeSuffixes
+        csvColName = sprintf(<span class="string">'robot%d_%s'</span>, i, attr{1});  <span class="comment">% Matches CSV column names</span>
+        structFieldName = attr{1};  <span class="comment">% Valid field name</span>
+        <span class="keyword">if</span> ismember(csvColName, robotChoice_Data.Properties.VariableNames)
+            robot_states.([<span class="string">'robot'</span> num2str(i)]).(structFieldName) = robotChoice_Data.(csvColName);
+        <span class="keyword">else</span>
+            warning(<span class="string">'Missing attribute column: %s'</span>, csvColName);
+            robot_states.([<span class="string">'robot'</span> num2str(i)]).(structFieldName) = NaN(height(robotChoice_Data), 1);
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="comment">% Extract choice data and other metadata</span>
+choices = robotChoice_Data.choice;
+participant_ids = robotChoice_Data.id;
+stake_types = robotChoice_Data.stakes;
+time_spent = robotChoice_Data.timeelapsed;
+</pre><pre class="codeoutput">User robot choice data imported successfully.
+</pre><h2 id="3">Step 2: R Bridge Implementation</h2><pre class="codeinput">disp(<span class="string">'Initializing R bridge...'</span>);
+
+<span class="comment">% Configure paths</span>
+rscript_path = <span class="string">'C:\Program Files\R\R-4.4.2\bin\x64\Rscript.exe'</span>;
+r_script = <span class="string">'G:\My Drive\myResearch\Research Experimentation\Apollo\apollo\example\DFT_Bounding_Overwatch.R'</span>;
+csvFile = <span class="string">'G:\My Drive\myResearch\Research Experimentation\Apollo\apollo\data\Bounding_Overwatch_Data\HumanData_Bounding_Overwatch.csv'</span>;
+outputDir = <span class="string">'G:\My Drive\myResearch\Research Experimentation\Apollo\apollo\Output_BoundingOverwatch'</span>;
+
+<span class="comment">% Verify installations</span>
+<span class="keyword">if</span> ~isfile(rscript_path)
+    error(<span class="string">'Rscript.exe not found at: %s'</span>, rscript_path);
+<span class="keyword">elseif</span> ~isfile(r_script)
+    error(<span class="string">'R script not found at: %s'</span>, r_script);
+<span class="keyword">elseif</span> ~isfile(csvFile)
+    error(<span class="string">'Input CSV not found at: %s'</span>, csvFile);
+<span class="keyword">elseif</span> ~isfolder(outputDir)
+    warning(<span class="string">'Output folder does not exist, creating: %s'</span>, outputDir);
+    mkdir(outputDir);
+<span class="keyword">end</span>
+
+<span class="comment">% Execute R with JSON output</span>
+<span class="keyword">try</span>
+    <span class="comment">% Use proper argument formatting</span>
+    cmd = sprintf([<span class="string">'"%s" "%s" '</span>, <span class="keyword">...</span>
+               <span class="string">'-i "%s" -o "%s"'</span>], <span class="keyword">...</span>
+               rscript_path, r_script, csvFile, outputDir);
+
+[status,result] = system(cmd);
+
+    <span class="keyword">if</span> status == 0
+        <span class="comment">% Handle output path (whether directory or file)</span>
+        <span class="keyword">if</span> isfolder(outputDir)
+            jsonFile = fullfile(outputDir, <span class="string">'DFT_output.json'</span>);
+        <span class="keyword">else</span>
+            jsonFile = outputDir;
+        <span class="keyword">end</span>
+
+        <span class="comment">% Parse JSON output</span>
+        <span class="keyword">if</span> exist(jsonFile, <span class="string">'file'</span>)
+            jsonText = fileread(jsonFile);
+            params = jsondecode(jsonText);
+
+            <span class="comment">% Extract parameters with validation</span>
+            <span class="comment">%Boundedphi1, phi2 parameters</span>
+            <span class="comment">%phi1 = max(0, validateParam(params, 'phi1', 0.5)); % Ensure non-negative</span>
+            <span class="comment">%phi2 = min(max(0, validateParam(params, 'phi2', 0.8)), 1); % Constrain 0-1</span>
+
+            <span class="comment">%Raw phi1, phi2 parameters</span>
+            phi1 = validateParam(params, <span class="string">'phi1'</span>, 0.5);
+            phi2 = validateParam(params, <span class="string">'phi2'</span>, 0.8);
+            tau = 1 + exp(validateParam(params, <span class="string">'timesteps'</span>, 0.5));
+            error_sd = min(max(0.1, validateParam(params, <span class="string">'error_sd'</span>, 0.1)), 1); <span class="comment">% still clip here</span>
+
+            <span class="comment">% Extract attribute weights</span>
+            beta_weights = [
+                params.b_attr1;
+                params.b_attr2;
+                params.b_attr3;
+                params.b_attr4
+            ];
+
+            <span class="comment">% Get initial preferences from ASCs</span>
+            initial_P = [
+                validateParam(params, <span class="string">'asc_1'</span>, 0);
+                validateParam(params, <span class="string">'asc_2'</span>, 0);
+                validateParam(params, <span class="string">'asc_3'</span>, 0);
+            ];
+
+            disp(<span class="string">'Estimated Parameters:'</span>);
+            disp([<span class="string">'phi1: '</span>, num2str(phi1)]);
+            disp([<span class="string">'phi2: '</span>, num2str(phi2)]);
+            disp([<span class="string">'tau: '</span>, num2str(tau)]);
+            disp([<span class="string">'error_sd: '</span>, num2str(error_sd)]);
+            disp(<span class="string">'Initial Preferences (from ASCs):'</span>);
+            disp(initial_P');
+        <span class="keyword">else</span>
+            error(<span class="string">'R output file not found'</span>);
+        <span class="keyword">end</span>
+    <span class="keyword">else</span>
+        error(<span class="string">'R execution failed: %s'</span>, result);
+    <span class="keyword">end</span>
+<span class="keyword">catch</span> ME
+    disp(<span class="string">'Error during R execution:'</span>);
+    disp(getReport(ME, <span class="string">'extended'</span>));
+    [phi1, phi2, tau, error_sd] = getFallbackParams();
+    beta_weights = [0.3; 0.2; 0.4; 0.5]; <span class="comment">% Default weights</span>
+    initial_P = zeros(3,1); <span class="comment">% Neutral initial preferences</span>
+<span class="keyword">end</span>
+</pre><pre class="codeoutput">Initializing R bridge...
+</pre><h2 id="4">Step 3: MDFT Formulation to Calculate Preference Dynamics</h2><p>(MDFT calculations based on estimated parameters) Create M matrix from current trial's attributes C11-C14 are consequence attributes for Robot 1 C21-C24 are consequence attributes for Robot 2 C31-C34 are consequence attributes for Robot 3</p><pre class="codeinput"><span class="keyword">for</span> current_trial = 1:height(robotChoice_Data)
+    num_attributes = 4;
+
+    M = [
+        robotChoice_Data.c11(current_trial), robotChoice_Data.c12(current_trial), robotChoice_Data.c13(current_trial), robotChoice_Data.c14(current_trial);
+        robotChoice_Data.c21(current_trial), robotChoice_Data.c22(current_trial), robotChoice_Data.c23(current_trial), robotChoice_Data.c24(current_trial);
+        robotChoice_Data.c31(current_trial), robotChoice_Data.c32(current_trial), robotChoice_Data.c33(current_trial), robotChoice_Data.c34(current_trial)
+    ];
+
+    <span class="comment">% Normalize M values by dividing by 2 and clamping to [0.01, 1]</span>
+    M = M / 2;
+    M = max(0.01, min(1, M));
+
+    attributes = {<span class="string">'C1 - Easy Nav, Low Exposure'</span>, <span class="string">'C2 - Hard Nav, Low Exposure'</span>, <span class="string">'C3 - Easy Nav, High Exposure'</span>, <span class="string">'C4 - Hard Nav, High Exposure'</span>};
+    beta = beta_weights ./ sum(abs(beta_weights));
+    beta = beta';
+
+    [E_P, V_P, choice_probs, P_tau] = calculateDFTdynamics(<span class="keyword">...</span>
+        phi1, phi2, tau, error_sd, beta, M, initial_P);
+
+    <span class="comment">% Display results for the trial</span>
+    disp(<span class="string">'=== Trial Analysis ==='</span>);
+    disp([<span class="string">'Trial: '</span>, num2str(current_trial)]);
+    disp([<span class="string">'Participant: '</span>, num2str(participant_ids(current_trial))]);
+    disp([<span class="string">'Actual Choice: Robot '</span>, num2str(choices(current_trial))]);
+
+    disp(<span class="string">'M matrix (alternatives &times; attributes):'</span>);
+    disp(array2table(M, <span class="keyword">...</span>
+        <span class="string">'RowNames'</span>, {<span class="string">'Robot1'</span>,<span class="string">'Robot2'</span>,<span class="string">'Robot3'</span>}, <span class="keyword">...</span>
+        <span class="string">'VariableNames'</span>, attributes));
+
+    disp(<span class="string">'DFT Results:'</span>);
+    disp([<span class="string">'E_P: '</span>, num2str(E_P', <span class="string">'%.2f  '</span>)]);
+    disp([<span class="string">'Choice probabilities: '</span>, num2str(choice_probs', <span class="string">'%.3f  '</span>)]);
+    [~, predicted_choice] = max(choice_probs);
+    disp([<span class="string">'Predicted choice: Robot '</span>, num2str(predicted_choice)]);
+    disp([<span class="string">'Actual choice: Robot '</span>, num2str(choices(current_trial))]);
+    disp(<span class="string">' '</span>);
+
+    <span class="keyword">if</span> predicted_choice == choices(current_trial)
+        disp(<span class="string">'&#10003; Prediction matches actual choice'</span>);
+    <span class="keyword">else</span>
+        disp(<span class="string">'&#10007; Prediction differs from actual choice'</span>);
+    <span class="keyword">end</span>
+
+    <span class="comment">% Plot evolution</span>
+    figure;
+    plot(0:tau, P_tau);
+    xlabel(<span class="string">'Preference Step (\tau)'</span>);
+    ylabel(<span class="string">'Preference Strength'</span>);
+    legend({<span class="string">'Robot1'</span>,<span class="string">'Robot2'</span>,<span class="string">'Robot3'</span>});
+    title(sprintf(<span class="string">'Preference Evolution (Trial %d)'</span>, current_trial));
+    grid <span class="string">on</span>;
+<span class="keyword">end</span>
+<span class="comment">%{
+</span><span class="comment">%% Step 4: Output Results
+</span><span class="comment">disp('Saving results to CSV...');
+</span><span class="comment">output_table = table(E_P, V_P, P_tau(end,:)', ...
+</span><span class="comment">                     'VariableNames', {'ExpectedPreference', 'VariancePreference', 'FinalPreferences'});
+</span><span class="comment">writetable(output_table, 'results.csv');
+</span><span class="comment">disp('Results saved successfully!');
+</span><span class="comment">%}</span>
+</pre><pre class="codeoutput">=== Trial Analysis ===
+Trial: 1
+Participant: 124737
+Actual Choice: Robot 1
+M matrix (alternatives &times; attributes):
+              C1 - Easy Nav, Low Exposure    C2 - Hard Nav, Low Exposure    C3 - Easy Nav, High Exposure    C4 - Hard Nav, High Exposure
+              ___________________________    ___________________________    ____________________________    ____________________________
+
+    Robot1              0.61235                        0.36002                        0.31357                         0.061235          
+    Robot2              0.67166                        0.40339                        0.33544                         0.067166          
+    Robot3              0.64269                        0.38025                         0.3267                         0.064269          
+
+DFT Results:
+E_P: 38.60  -37.56   -1.14
+Choice probabilities: 1.000  0.000  0.000
+Predicted choice: Robot 1
+Actual choice: Robot 1
+ 
+&#10003; Prediction matches actual choice
+=== Trial Analysis ===
+Trial: 2
+Participant: 141831
+Actual Choice: Robot 2
+M matrix (alternatives &times; attributes):
+              C1 - Easy Nav, Low Exposure    C2 - Hard Nav, Low Exposure    C3 - Easy Nav, High Exposure    C4 - Hard Nav, High Exposure
+              ___________________________    ___________________________    ____________________________    ____________________________
+
+    Robot1              0.93092                        0.55165                        0.47237                         0.093092          
+    Robot2              0.91086                        0.54608                        0.45586                         0.091086          
+    Robot3              0.89683                        0.50696                        0.47955                         0.089683          
+
+DFT Results:
+E_P: -21.64    7.97   13.57
+Choice probabilities: 0.000  0.004  0.996
+Predicted choice: Robot 3
+Actual choice: Robot 2
+ 
+&#10007; Prediction differs from actual choice
+=== Trial Analysis ===
+Trial: 3
+Participant: 125802
+Actual Choice: Robot 2
+M matrix (alternatives &times; attributes):
+              C1 - Easy Nav, Low Exposure    C2 - Hard Nav, Low Exposure    C3 - Easy Nav, High Exposure    C4 - Hard Nav, High Exposure
+              ___________________________    ___________________________    ____________________________    ____________________________
+
+    Robot1              0.87744                        0.49305                        0.47213                         0.087744          
+    Robot2              0.82781                        0.48521                        0.42538                         0.082781          
+    Robot3              0.91154                        0.53071                        0.47199                         0.091154          
+
+DFT Results:
+E_P: -12.60   63.31  -50.82
+Choice probabilities: 0.000  1.000  0.000
+Predicted choice: Robot 2
+Actual choice: Robot 2
+ 
+&#10003; Prediction matches actual choice
+=== Trial Analysis ===
+Trial: 4
+Participant: 175044
+Actual Choice: Robot 1
+M matrix (alternatives &times; attributes):
+              C1 - Easy Nav, Low Exposure    C2 - Hard Nav, Low Exposure    C3 - Easy Nav, High Exposure    C4 - Hard Nav, High Exposure
+              ___________________________    ___________________________    ____________________________    ____________________________
+
+    Robot1              0.68277                        0.41427                        0.33677                         0.068277          
+    Robot2              0.57966                        0.36179                        0.27584                         0.057966          
+    Robot3              0.69305                        0.41089                        0.35146                         0.069305          
+
+DFT Results:
+E_P: -41.44  100.67  -59.33
+Choice probabilities: 0.000  1.000  0.000
+Predicted choice: Robot 2
+Actual choice: Robot 1
+ 
+&#10007; Prediction differs from actual choice
+=== Trial Analysis ===
+Trial: 5
+Participant: 181700
+Actual Choice: Robot 2
+M matrix (alternatives &times; attributes):
+              C1 - Easy Nav, Low Exposure    C2 - Hard Nav, Low Exposure    C3 - Easy Nav, High Exposure    C4 - Hard Nav, High Exposure
+              ___________________________    ___________________________    ____________________________    ____________________________
+
+    Robot1                 1                           0.64335                        0.51853                         0.10563           
+    Robot2                 1                           0.61778                        0.51598                         0.10307           
+    Robot3                 1                           0.66045                        0.54499                         0.10959           
+
+DFT Results:
+E_P: 3.13   2.50  -5.74
+Choice probabilities: 0.651  0.349  0.000
+Predicted choice: Robot 1
+Actual choice: Robot 2
+ 
+&#10007; Prediction differs from actual choice
+=== Trial Analysis ===
+Trial: 6
+Participant: 141831
+Actual Choice: Robot 3
+M matrix (alternatives &times; attributes):
+              C1 - Easy Nav, Low Exposure    C2 - Hard Nav, Low Exposure    C3 - Easy Nav, High Exposure    C4 - Hard Nav, High Exposure
+              ___________________________    ___________________________    ____________________________    ____________________________
+
+    Robot1              0.69731                        0.41723                        0.34981                         0.069731          
+    Robot2              0.64031                        0.32027                        0.38407                         0.064031          
+    Robot3              0.73778                        0.43043                        0.38113                         0.073778          
+
+DFT Results:
+E_P: 3.26   52.38  -55.74
+Choice probabilities: 0.000  1.000  0.000
+Predicted choice: Robot 2
+Actual choice: Robot 3
+ 
+&#10007; Prediction differs from actual choice
+=== Trial Analysis ===
+Trial: 7
+Participant: 141831
+Actual Choice: Robot 3
+M matrix (alternatives &times; attributes):
+              C1 - Easy Nav, Low Exposure    C2 - Hard Nav, Low Exposure    C3 - Easy Nav, High Exposure    C4 - Hard Nav, High Exposure
+              ___________________________    ___________________________    ____________________________    ____________________________
+
+    Robot1              0.83588                        0.50869                        0.41077                         0.083588          
+    Robot2              0.85245                        0.48627                        0.45143                         0.085245          
+    Robot3               0.8226                        0.48042                        0.42444                          0.08226          
+
+DFT Results:
+E_P: 9.06  -27.23   18.06
+Choice probabilities: 0.000  0.000  1.000
+Predicted choice: Robot 3
+Actual choice: Robot 3
+ 
+&#10003; Prediction matches actual choice
+=== Trial Analysis ===
+Trial: 8
+Participant: 123310
+Actual Choice: Robot 1
+M matrix (alternatives &times; attributes):
+              C1 - Easy Nav, Low Exposure    C2 - Hard Nav, Low Exposure    C3 - Easy Nav, High Exposure    C4 - Hard Nav, High Exposure
+              ___________________________    ___________________________    ____________________________    ____________________________
+
+    Robot1              0.69463                        0.43809                          0.326                         0.069463          
+    Robot2              0.67178                        0.42342                        0.31553                         0.067178          
+    Robot3              0.66209                         0.4035                        0.32479                         0.066209          
+
+DFT Results:
+E_P: -22.44    7.68   14.65
+Choice probabilities: 0.000  0.001  0.999
+Predicted choice: Robot 3
+Actual choice: Robot 1
+ 
+&#10007; Prediction differs from actual choice
+=== Trial Analysis ===
+Trial: 9
+Participant: 214504
+Actual Choice: Robot 2
+M matrix (alternatives &times; attributes):
+              C1 - Easy Nav, Low Exposure    C2 - Hard Nav, Low Exposure    C3 - Easy Nav, High Exposure    C4 - Hard Nav, High Exposure
+              ___________________________    ___________________________    ____________________________    ____________________________
+
+    Robot1              0.39489                        0.23867                        0.19571                         0.039489          
+    Robot2              0.65797                        0.43425                        0.28952                         0.065797          
+    Robot3              0.64762                         0.4014                        0.31099                         0.064762          
+
+DFT Results:
+E_P: 223.27  -112.90  -110.48
+Choice probabilities: 1.000  0.000  0.000
+Predicted choice: Robot 1
+Actual choice: Robot 2
+ 
+&#10007; Prediction differs from actual choice
+=== Trial Analysis ===
+Trial: 10
+Participant: 181700
+Actual Choice: Robot 3
+M matrix (alternatives &times; attributes):
+              C1 - Easy Nav, Low Exposure    C2 - Hard Nav, Low Exposure    C3 - Easy Nav, High Exposure    C4 - Hard Nav, High Exposure
+              ___________________________    ___________________________    ____________________________    ____________________________
+
+    Robot1              0.76933                        0.45388                        0.39238                         0.076933          
+    Robot2              0.73095                        0.40426                        0.39979                         0.073095          
+    Robot3              0.98989                        0.58445                        0.50443                         0.098989          
+
+DFT Results:
+E_P: 85.43   125.25  -210.79
+Choice probabilities: 0.000  1.000  0.000
+Predicted choice: Robot 2
+Actual choice: Robot 3
+ 
+&#10007; Prediction differs from actual choice
+</pre><img vspace="5" hspace="5" src="main_BoundingOverwatch_01.png" alt=""> <img vspace="5" hspace="5" src="main_BoundingOverwatch_02.png" alt=""> <img vspace="5" hspace="5" src="main_BoundingOverwatch_03.png" alt=""> <img vspace="5" hspace="5" src="main_BoundingOverwatch_04.png" alt=""> <img vspace="5" hspace="5" src="main_BoundingOverwatch_05.png" alt=""> <img vspace="5" hspace="5" src="main_BoundingOverwatch_06.png" alt=""> <img vspace="5" hspace="5" src="main_BoundingOverwatch_07.png" alt=""> <img vspace="5" hspace="5" src="main_BoundingOverwatch_08.png" alt=""> <img vspace="5" hspace="5" src="main_BoundingOverwatch_09.png" alt=""> <img vspace="5" hspace="5" src="main_BoundingOverwatch_10.png" alt=""> <h2 id="5">Helper Functions</h2><pre class="codeinput"><span class="keyword">function</span> param = validateParam(params, name, default)
+    <span class="keyword">if</span> isfield(params, name) &amp;&amp; isnumeric(params.(name))
+        param = params.(name);
+    <span class="keyword">else</span>
+        warning(<span class="string">'Using default for %s'</span>, name);
+        param = default;
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="keyword">function</span> [phi1, phi2, tau, error_sd] = getFallbackParams()
+    phi1 = 0.5 + 0.1*randn();
+    phi2 = 0.8 + 0.1*randn();
+    tau = 10 + randi(5);
+    error_sd = 0.1 + 0.05*rand();
+    warning(<span class="string">'Using randomized default parameters'</span>);
+<span class="keyword">end</span>
+</pre><pre class="codeoutput">Estimated Parameters:
+phi1: 3.3786
+phi2: 0
+tau: 22027.4658
+error_sd: 1
+Initial Preferences (from ASCs):
+   -0.0165   -0.0888         0
+
+</pre><p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2022b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Main Simulation Script for BoundingOverwatch Project with R Integration
+% Randomly 10 trials is used to validate predictions
+% DFT Parameters:
+% phi1 - sensitivity to attribute differences (typically 0.5-2)
+% phi2 - memory/feedback strength (0-1)
+% tau - decision time steps (integer > 0)
+% error_sd - noise standard deviation (σ_ε)
+% beta - attribute weights from R estimation
+% w -  attention weights (default [0.5;0.5])
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+clc;
+clear all;
+
+%% Step 1: Import CSV Data
+% (reference apolloMain_5 amd apolloMain_6 as example for data manipulation)
+% biasData = readtable('user_choices.csv'); % Replace with the path to your data file
+% disp('User bias data imported successfully.');
+% taskChoice_Data = readtable('user_choices.csv'); % Replace with the path to your data file
+% disp('User task choice data imported successfully.');
+robotChoice_Data = readtable('G:\My Drive\myResearch\Research Experimentation\Apollo\apollo\data\Bounding_Overwatch_Data\HumanData_Bounding_Overwatch.csv');
+% Convert all column headers to lowercase
+robotChoice_Data.Properties.VariableNames = lower(robotChoice_Data.Properties.VariableNames);
+disp('User robot choice data imported successfully.');
+
+% Randomly select 10 rows (or all rows if fewer than 10)
+numRows = height(robotChoice_Data);
+randomIndices = randperm(numRows, min(10, numRows));
+robotChoice_Data = robotChoice_Data(randomIndices, :);
+
+% Extract robot state attributes dynamically
+robot_states = struct();
+attributeSuffixes = {'traversability', 'visibility'}; % No leading underscores
+for i = 1:3
+    for attr = attributeSuffixes
+        csvColName = sprintf('robot%d_%s', i, attr{1});  % Matches CSV column names
+        structFieldName = attr{1};  % Valid field name
+        if ismember(csvColName, robotChoice_Data.Properties.VariableNames)
+            robot_states.(['robot' num2str(i)]).(structFieldName) = robotChoice_Data.(csvColName);
+        else
+            warning('Missing attribute column: %s', csvColName);
+            robot_states.(['robot' num2str(i)]).(structFieldName) = NaN(height(robotChoice_Data), 1);
+        end
+    end
+end
+
+% Extract choice data and other metadata
+choices = robotChoice_Data.choice;
+participant_ids = robotChoice_Data.id;
+stake_types = robotChoice_Data.stakes;
+time_spent = robotChoice_Data.timeelapsed;
+
+%% Step 2: R Bridge Implementation
+disp('Initializing R bridge...');
+
+% Configure paths
+rscript_path = 'C:\Program Files\R\R-4.4.2\bin\x64\Rscript.exe';
+r_script = 'G:\My Drive\myResearch\Research Experimentation\Apollo\apollo\example\DFT_Bounding_Overwatch.R';
+csvFile = 'G:\My Drive\myResearch\Research Experimentation\Apollo\apollo\data\Bounding_Overwatch_Data\HumanData_Bounding_Overwatch.csv';
+outputDir = 'G:\My Drive\myResearch\Research Experimentation\Apollo\apollo\Output_BoundingOverwatch';
+
+% Verify installations
+if ~isfile(rscript_path)
+    error('Rscript.exe not found at: %s', rscript_path); 
+elseif ~isfile(r_script)
+    error('R script not found at: %s', r_script);
+elseif ~isfile(csvFile)
+    error('Input CSV not found at: %s', csvFile);
+elseif ~isfolder(outputDir)
+    warning('Output folder does not exist, creating: %s', outputDir);
+    mkdir(outputDir);
+end
+
+% Execute R with JSON output
+try
+    % Use proper argument formatting
+    cmd = sprintf(['"%s" "%s" ', ...
+               '-i "%s" -o "%s"'], ...
+               rscript_path, r_script, csvFile, outputDir);
+
+[status,result] = system(cmd);
+    
+    if status == 0
+        % Handle output path (whether directory or file)
+        if isfolder(outputDir)
+            jsonFile = fullfile(outputDir, 'DFT_output.json');
+        else
+            jsonFile = outputDir;
+        end
+        
+        % Parse JSON output
+        if exist(jsonFile, 'file')
+            jsonText = fileread(jsonFile);
+            params = jsondecode(jsonText);
+            
+            % Extract parameters with validation
+            %Boundedphi1, phi2 parameters
+            %phi1 = max(0, validateParam(params, 'phi1', 0.5)); % Ensure non-negative
+            %phi2 = min(max(0, validateParam(params, 'phi2', 0.8)), 1); % Constrain 0-1
+
+            %Raw phi1, phi2 parameters
+            phi1 = validateParam(params, 'phi1', 0.5);
+            phi2 = validateParam(params, 'phi2', 0.8);
+            tau = 1 + exp(validateParam(params, 'timesteps', 0.5));
+            error_sd = min(max(0.1, validateParam(params, 'error_sd', 0.1)), 1); % still clip here
+            
+            % Extract attribute weights
+            beta_weights = [
+                params.b_attr1;
+                params.b_attr2;
+                params.b_attr3;
+                params.b_attr4
+            ];
+            
+            % Get initial preferences from ASCs
+            initial_P = [
+                validateParam(params, 'asc_1', 0);
+                validateParam(params, 'asc_2', 0);
+                validateParam(params, 'asc_3', 0);
+            ];
+            
+            disp('Estimated Parameters:');
+            disp(['phi1: ', num2str(phi1)]);
+            disp(['phi2: ', num2str(phi2)]);
+            disp(['tau: ', num2str(tau)]);
+            disp(['error_sd: ', num2str(error_sd)]);
+            disp('Initial Preferences (from ASCs):');
+            disp(initial_P');
+        else
+            error('R output file not found');
+        end
+    else
+        error('R execution failed: %s', result);
+    end
+catch ME
+    disp('Error during R execution:');
+    disp(getReport(ME, 'extended'));
+    [phi1, phi2, tau, error_sd] = getFallbackParams();
+    beta_weights = [0.3; 0.2; 0.4; 0.5]; % Default weights
+    initial_P = zeros(3,1); % Neutral initial preferences
+end
+
+%% Step 3: MDFT Formulation to Calculate Preference Dynamics
+% (MDFT calculations based on estimated parameters)
+% Create M matrix from current trial's attributes
+% C11-C14 are consequence attributes for Robot 1 
+% C21-C24 are consequence attributes for Robot 2 
+% C31-C34 are consequence attributes for Robot 3 
+for current_trial = 1:height(robotChoice_Data)
+    num_attributes = 4;
+
+    M = [
+        robotChoice_Data.c11(current_trial), robotChoice_Data.c12(current_trial), robotChoice_Data.c13(current_trial), robotChoice_Data.c14(current_trial);
+        robotChoice_Data.c21(current_trial), robotChoice_Data.c22(current_trial), robotChoice_Data.c23(current_trial), robotChoice_Data.c24(current_trial);
+        robotChoice_Data.c31(current_trial), robotChoice_Data.c32(current_trial), robotChoice_Data.c33(current_trial), robotChoice_Data.c34(current_trial)
+    ];
+
+    % Normalize M values by dividing by 2 and clamping to [0.01, 1]
+    M = M / 2;
+    M = max(0.01, min(1, M));
+
+    attributes = {'C1 - Easy Nav, Low Exposure', 'C2 - Hard Nav, Low Exposure', 'C3 - Easy Nav, High Exposure', 'C4 - Hard Nav, High Exposure'};
+    beta = beta_weights ./ sum(abs(beta_weights));
+    beta = beta';
+
+    [E_P, V_P, choice_probs, P_tau] = calculateDFTdynamics(...
+        phi1, phi2, tau, error_sd, beta, M, initial_P);
+
+    % Display results for the trial
+    disp('=== Trial Analysis ===');
+    disp(['Trial: ', num2str(current_trial)]);
+    disp(['Participant: ', num2str(participant_ids(current_trial))]);
+    disp(['Actual Choice: Robot ', num2str(choices(current_trial))]);
+
+    disp('M matrix (alternatives × attributes):');
+    disp(array2table(M, ...
+        'RowNames', {'Robot1','Robot2','Robot3'}, ...
+        'VariableNames', attributes));
+
+    disp('DFT Results:');
+    disp(['E_P: ', num2str(E_P', '%.2f  ')]);
+    disp(['Choice probabilities: ', num2str(choice_probs', '%.3f  ')]);
+    [~, predicted_choice] = max(choice_probs);
+    disp(['Predicted choice: Robot ', num2str(predicted_choice)]);
+    disp(['Actual choice: Robot ', num2str(choices(current_trial))]);
+    disp(' ');
+
+    if predicted_choice == choices(current_trial)
+        disp('✓ Prediction matches actual choice');
+    else
+        disp('✗ Prediction differs from actual choice');
+    end
+
+    % Plot evolution
+    figure;
+    plot(0:tau, P_tau);
+    xlabel('Preference Step (\tau)');
+    ylabel('Preference Strength');
+    legend({'Robot1','Robot2','Robot3'});
+    title(sprintf('Preference Evolution (Trial %d)', current_trial));
+    grid on;
+end
+%{
+%% Step 4: Output Results
+disp('Saving results to CSV...');
+output_table = table(E_P, V_P, P_tau(end,:)', ...
+                     'VariableNames', {'ExpectedPreference', 'VariancePreference', 'FinalPreferences'});
+writetable(output_table, 'results.csv');
+disp('Results saved successfully!');
+%}
+%% Helper Functions
+function param = validateParam(params, name, default)
+    if isfield(params, name) && isnumeric(params.(name))
+        param = params.(name);
+    else
+        warning('Using default for %s', name);
+        param = default;
+    end
+end
+
+function [phi1, phi2, tau, error_sd] = getFallbackParams()
+    phi1 = 0.5 + 0.1*randn();
+    phi2 = 0.8 + 0.1*randn();
+    tau = 10 + randi(5);
+    error_sd = 0.1 + 0.05*rand();
+    warning('Using randomized default parameters');
+end
+##### SOURCE END #####
+--></body></html>

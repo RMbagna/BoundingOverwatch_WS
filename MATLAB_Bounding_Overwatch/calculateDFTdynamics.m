@@ -1,4 +1,4 @@
-function [E_P, V_P, choice_probs, P_tau] = calculateDFTdynamics(phi1, phi2, tau, epsilon, beta, M, initial_P,w)
+function [E_P, V_P, choice_probs, P_tau] = calculateDFTdynamics(phi1, phi2, tau, epsilon, beta, M, initial_P)
     % Inputs:
     % phi1 - sensitivity parameter
     % phi2 - memory parameter
@@ -13,7 +13,6 @@ function [E_P, V_P, choice_probs, P_tau] = calculateDFTdynamics(phi1, phi2, tau,
    tau = max(1, round(tau));  % ensure tau is integer
 
     [J, K] = size(M);
-    
     beta = beta(:)'; % Ensure beta is row vector
     
     if nargin < 7 || isempty(initial_P)

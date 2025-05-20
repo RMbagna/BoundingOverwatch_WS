@@ -29,7 +29,7 @@ input_file  <- args$input
 output_dir  <- args$output
 
 # Modify data loading to use the arguments
-input_file <- if(!is.null(args$input)) args$input else 
+input_file <- if(!is.null(args$input)) args$input else
   file.path("G:\\My Drive\\myResearch\\Research Experimentation\\Apollo\\apollo\\data\\Bounding_Overwatch_Data\\HumanData_Bounding_Overwatch.csv")
 output_dir <- if(!is.null(args$output)) args$output else "Output_BoundingOverwatch"
 
@@ -52,7 +52,38 @@ apollo_control = list(
 )
 
 # ################################################################# #
-#### LOAD DATA AND APPLY TRANSFORMATION (DIVIDE BY 2)            ####
+#### LOAD DATA AND APPLY TRANSFORMATION (DIVIDE BY 2)   05/15/025 only worked for 1/4 ofthe data ####
+# ################################################################# #
+
+# database <- tryCatch({
+
+#   # Load and clean data
+#   data_clean <- read.csv(input_file, header = TRUE) %>%
+#     `colnames<-`(tolower(colnames(.))) %>%
+#     filter(choice %in% 1:3) %>%
+#     mutate(choice = as.numeric(choice)) %>%
+#     na.omit()
+
+#   # Identify consequence columns (C11 to C34)
+#   consequence_cols <- grep("^c(1[1-4]|2[1-4]|3[1-4])$", names(data_clean), value = TRUE)
+
+#  # Divide each consequence value by 2, clamp to [0.01, 1]
+#   # data_transformed <- data_clean %>%
+#   #  mutate(across(all_of(consequence_cols), ~ pmax(0.01, pmin(1, . / 2))))
+
+#   data_transformed <- data_clean %>%
+#   mutate(across(all_of(consequence_cols), ~ pmax(0.01, pmin(1, .))))  # Clamp only, no divide
+
+
+#   message("Dataset loaded and divided by 2 with clamping.")
+#   data_transformed
+
+# }, error = function(e) {
+#   stop(paste("Data loading failed:", e$message))
+# })
+
+# ################################################################# #
+#### LOAD DATA AND APPLY GLOBAL NORMALIZATION    05/19/2025         ####
 # ################################################################# #
 
 database <- tryCatch({
@@ -61,22 +92,31 @@ database <- tryCatch({
   data_clean <- read.csv(input_file, header = TRUE) %>%
     `colnames<-`(tolower(colnames(.))) %>%
     filter(choice %in% 1:3) %>%
-    mutate(choice = as.numeric(choice)) %>%
-    na.omit()
+    mutate(choice = as.numeric(choice))
 
   # Identify consequence columns (C11 to C34)
   consequence_cols <- grep("^c(1[1-4]|2[1-4]|3[1-4])$", names(data_clean), value = TRUE)
 
-  # Divide each consequence value by 2, clamp to [0.01, 1]
-  data_transformed <- data_clean %>%
-    mutate(across(all_of(consequence_cols), ~ pmax(0.01, pmin(1, . / 2))))
+  # Remove rows where all C-values are missing
+  data_filtered <- data_clean %>%
+    filter(rowSums(is.na(across(all_of(consequence_cols)))) < length(consequence_cols))
 
-  message("Dataset loaded and divided by 2 with clamping.")
-  data_transformed
+  # Compute global max value across all consequence columns
+  global_max <- max(data_filtered[ , consequence_cols], na.rm = TRUE)
+  if (!is.finite(global_max) || global_max <= 0) global_max <- 1  # fallback safeguard
+
+  # Normalize all C-values globally, clamp to [0.01, 1]
+  data_normalized <- data_filtered %>%
+    mutate(across(all_of(consequence_cols), ~ pmax(0.01, pmin(1, . / global_max))))
+
+  message("Dataset loaded, cleaned, and globally normalized.")
+  data_normalized
 
 }, error = function(e) {
   stop(paste("Data loading failed:", e$message))
 })
+
+
 
 # ################################################################# #
 #### DEFINE MODEL PARAMETERS                                     ####
@@ -90,7 +130,7 @@ apollo_beta = c(
   b_attr4 = log(1.0),  # Changed from 0 to log(1.0)
   phi1 = 1,   # Changed from 1 to more moderate starting value
   phi2 = 0,     # Kept at 0
-  error_sd = 0.3,  # Changed to more moderate value
+  error_sd = 0.5,  # Changed to more moderate value
   timesteps = 10  # Changed from 1 to larger starting value
 )
 
@@ -143,7 +183,7 @@ apollo_probabilities = function(apollo_beta, apollo_inputs, functionality = "est
     attrScalings = 1,
     procPars = list(
       error_sd = pmax(0.01, pmin(1, error_sd)),  # Add lower bound
-      timesteps = pmax(1, pmin(20000, timesteps)),  # Add reasonable bounds
+      timesteps = pmax(1, pmin(5, timesteps)),  # Add reasonable bounds
       phi1 = phi1,
       phi2 = phi2
     ),

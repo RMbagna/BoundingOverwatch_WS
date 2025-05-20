@@ -218,30 +218,30 @@
 
 
 
+        // Initially used to generate consequences for the robots on tooltip while hovering on each robot.
+        // function generateConsequences(robot) {
+        //     const state = calculateRobotState(robot);
 
-        function generateConsequences(robot) {
-            const state = calculateRobotState(robot);
+        //     const goodBias = (state.traversability + state.visibility) / 2; // Average of traversability and visibility
+        //     const badBias = 1.0 - goodBias;
 
-            const goodBias = (state.traversability + state.visibility) / 2; // Average of traversability and visibility
-            const badBias = 1.0 - goodBias;
+        //     // Randomized starting weights, biased
+        //     let weights = {
+        //         C1: Math.random() * goodBias,  // Good navigation, good exposure
+        //         C2: Math.random() * badBias,   // Hard navigation, good exposure
+        //         C3: Math.random() * goodBias,  // Good navigation, hard exposure
+        //         C4: Math.random() * badBias    // Hard navigation, hard exposure
+        //     };
 
-            // Randomized starting weights, biased
-            let weights = {
-                C1: Math.random() * goodBias,  // Good navigation, good exposure
-                C2: Math.random() * badBias,   // Hard navigation, good exposure
-                C3: Math.random() * goodBias,  // Good navigation, hard exposure
-                C4: Math.random() * badBias    // Hard navigation, hard exposure
-            };
+        //     const sum = Object.values(weights).reduce((a, b) => a + b, 0);
 
-            const sum = Object.values(weights).reduce((a, b) => a + b, 0);
+        //     let normalized = {};
+        //     for (let [key, val] of Object.entries(weights)) {
+        //         normalized[key] = Math.round((val / sum) * 100);
+        //     }
 
-            let normalized = {};
-            for (let [key, val] of Object.entries(weights)) {
-                normalized[key] = Math.round((val / sum) * 100);
-            }
-
-            return normalized;
-        }
+        //     return normalized;
+        // }
 
 
         // ========== GRID & PATH FUNCTIONS ==========
@@ -707,17 +707,31 @@
                 stakes: window.location.href.includes('highStake') ? 'high' : 'low',
                 profile: profileSettings.type || 'balanced',
                 
-                // Robot data
-                robots: robots.map((robot, i) => ({
-                    C1: robot.consequences.C1,
-                    C2: robot.consequences.C2,
-                    C3: robot.consequences.C3,
-                    C4: robot.consequences.C4,
-                    traversability: robotStates[i].traversability,
-                    visibility: robotStates[i].visibility
-                }))
+                robots: robots.map((robot) => {
+                    const state = calculateRobotState(robot);
+                    const robotNeed = calculateRobotNeed(robot);
+                    
+                    // Calculate C values using the same formula as in the tooltip
+                    const C1 = (robotNeed.n_trav_robot * attributeQualities.C1.navigation) + 
+                            (robotNeed.n_vis_robot * attributeQualities.C1.exposure);
+                    const C2 = (robotNeed.n_trav_robot * attributeQualities.C2.navigation) + 
+                            (robotNeed.n_vis_robot * attributeQualities.C2.exposure);
+                    const C3 = (robotNeed.n_trav_robot * attributeQualities.C3.navigation) + 
+                            (robotNeed.n_vis_robot * attributeQualities.C3.exposure);
+                    const C4 = (robotNeed.n_trav_robot * attributeQualities.C4.navigation) + 
+                            (robotNeed.n_vis_robot * attributeQualities.C4.exposure);
+                    
+                    return {
+                            C1: Number(C1.toFixed(4)),
+                            C2: Number(C2.toFixed(4)),
+                            C3: Number(C3.toFixed(4)),
+                            C4: Number(C4.toFixed(4)),
+                            traversability: Number(state.traversability.toFixed(4)),
+                            visibility: Number(state.visibility.toFixed(4))
+                        };
+                })
             });
-            
+
             localStorage.setItem('userResponses', JSON.stringify(userResponses));
         }
 
@@ -745,6 +759,7 @@
             
             return csv;
         }
+
 
         function downloadCSV(filename = 'user_responses.csv') {
             const csvData = convertToCSV(userResponses);

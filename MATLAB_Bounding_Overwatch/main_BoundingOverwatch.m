@@ -1,12 +1,13 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Main Simulation Script for BoundingOverwatch Project with R Integration
+% Randomly 10 trials is used to validate predictions
 % DFT Parameters:
 % phi1 - sensitivity to attribute differences (typically 0.5-2)
 % phi2 - memory/feedback strength (0-1)
 % tau - decision time steps (integer > 0)
 % error_sd - noise standard deviation (σ_ε)
-% beta - [2×1] attribute weights from R estimation
-% w - [2×1] attention weights (default [0.5;0.5])
+% beta - attribute weights from R estimation
+% w -  attention weights (default [0.5;0.5])
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 clc;
 clear all;
@@ -17,8 +18,15 @@ clear all;
 % disp('User bias data imported successfully.');
 % taskChoice_Data = readtable('user_choices.csv'); % Replace with the path to your data file
 % disp('User task choice data imported successfully.');
-robotChoice_Data = readtable('G:\My Drive\myResearch\Research Experimentation\Apollo\apollo\data\Bounding_Overwatch_Data\testTrial_Bounding_Overwatch2.csv');
+robotChoice_Data = readtable('G:\My Drive\myResearch\Research Experimentation\Apollo\apollo\data\Bounding_Overwatch_Data\HumanData_Bounding_Overwatch.csv');
+% Convert all column headers to lowercase
+robotChoice_Data.Properties.VariableNames = lower(robotChoice_Data.Properties.VariableNames);
 disp('User robot choice data imported successfully.');
+
+% Randomly select 10 rows (or all rows if fewer than 10)
+numRows = height(robotChoice_Data);
+randomIndices = randperm(numRows, min(10, numRows));
+robotChoice_Data = robotChoice_Data(randomIndices, :);
 
 % Extract robot state attributes dynamically
 robot_states = struct();
@@ -135,9 +143,9 @@ end
 %% Step 3: MDFT Formulation to Calculate Preference Dynamics
 % (MDFT calculations based on estimated parameters)
 % Create M matrix from current trial's attributes
-% C11-C14 are Robot 1 attributes
-% C21-C24 are Robot 2 attributes
-% C31-C34 are Robot 3 attributes
+% C11-C14 are consequence attributes for Robot 1 
+% C21-C24 are consequence attributes for Robot 2 
+% C31-C34 are consequence attributes for Robot 3 
 for current_trial = 1:height(robotChoice_Data)
     num_attributes = 4;
 
@@ -147,18 +155,25 @@ for current_trial = 1:height(robotChoice_Data)
         robotChoice_Data.c31(current_trial), robotChoice_Data.c32(current_trial), robotChoice_Data.c33(current_trial), robotChoice_Data.c34(current_trial)
     ];
 
-    M = M ./ sum(M, 2);  % Normalize each row of M
+    % Normalize M values by dividing by 2 and clamping to [0.01, 1]
+    %M = M / 2;
+    %M = max(0.01, min(1, M));
 
-    attributes = {'Attr1', 'Attr2', 'Attr3', 'Attr4'};
+    % --- Global Max Normalization ---
+    global_max = max(robotChoice_Data{:, {'c11','c12','c13','c14','c21','c22','c23','c24','c31','c32','c33','c34'}}, [], 'all', 'omitnan');
+    if ~isfinite(global_max) || global_max <= 0
+        global_max = 1; % fallback in case of zero or NaN
+    end
+
+    M = M / global_max;              % Normalize by global max
+    M = max(0.01, min(1, M));        % Clamp to [0.01, 1]
+
+    attributes = {'C1 - Easy Nav, Low Exposure', 'C2 - Hard Nav, Low Exposure', 'C3 - Easy Nav, High Exposure', 'C4 - Hard Nav, High Exposure'};
     beta = beta_weights ./ sum(abs(beta_weights));
     beta = beta';
 
-    if ~exist('w','var') || isempty(w)
-        w = ones(num_attributes, 1)/num_attributes;
-    end
-
     [E_P, V_P, choice_probs, P_tau] = calculateDFTdynamics(...
-        phi1, phi2, tau, error_sd, beta, M, initial_P, w);
+        phi1, phi2, tau, error_sd, beta, M, initial_P);
 
     % Display results for the trial
     disp('=== Trial Analysis ===');
