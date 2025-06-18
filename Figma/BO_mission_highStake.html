@@ -117,8 +117,751 @@
                 <div><span style="display:inline-block; width: 12px; height: 12px; background-color: rgba(0, 255, 0, 0.1); margin-right: 5px;"></span>Overlay (Green)</div>
             </div>
         </div>
+     <script>
+        // ========== CONSTANTS & INITIALIZATION ==========
+        const canvas = document.getElementById('overlayCanvas');
+        const ctx = canvas.getContext('2d');
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        const gridCols = 20;
+        const gridRows = 20;
+        const cellWidth = canvasWidth / gridCols;
+        const cellHeight = canvasHeight / gridRows;
 
-      <script>
+        // Profile settings from localStorage or defaults
+        const profileSettings = JSON.parse(localStorage.getItem('selectedProfile')) || {
+            L_traversability: 0.6, // Default balanced profile
+            L_visibility: 0.6
+        };
+
+        // Operator position
+        const operator = {
+            row: gridRows - 1,
+            col: Math.floor(gridCols / 2),
+            get x() { return (this.col + 0.5) * cellWidth; },
+            get y() { return (this.row + 0.5) * cellHeight; }
+        };
+
+        // State variables
+        let gridMap = [];
+        let robots = [];
+        let n_traversability_operator = 0.5; // Initial need values
+        let n_visibility_operator = 0.5;
+        let a_traversability = 0.5; // Initial state values
+        let a_visibility = 0.5;
+        const g_traversability = 1.0; // Goal values
+        const g_visibility = 1.0;
+        
+        // Attribute qualities for consequence types
+        const attributeQualities = {
+            C1: { navigation: 1.0, exposure: 1.0 },   // Easy nav, Low exposure
+            C2: { navigation: 0.1, exposure: 1.0 },   // Hard nav, Low exposure
+            C3: { navigation: 1.0, exposure: 0.1 },   // Easy nav, High exposure
+            C4: { navigation: 0.1, exposure: 0.1 }    // Hard nav, High exposure
+        };
+
+        // ========== INITIALIZATION FUNCTIONS ==========
+        // Update window.onload in all pages to:
+        window.onload = function() {
+            // Initialize or get session ID
+            if (!localStorage.getItem('sessionID')) {
+                localStorage.setItem('sessionID', generateSessionID());
+                localStorage.setItem('count', '1');
+            }
+            
+            // Initialize tracking
+            let count = parseInt(localStorage.getItem('count')) || 1;
+            document.getElementById('tracker').innerText = `Tracker: ${count}/30`;
+            
+            // Other page-specific initialization...
+        };
+        function initializeTracking() {
+            let count = localStorage.getItem('count') || 1;
+            localStorage.setItem('count', count);
+            document.getElementById('tracker').innerText = `Tracker: ${count}/30`;
+        }
+
+        function generateMap() {
+            gridMap = Array.from({ length: gridRows }, () =>
+                Array.from({ length: gridCols }, () => Math.random() < 0.5)
+            );
+        }
+
+        function generateRobots(numRobots) {
+            const openCells = getOpenCells();
+            robots = [];
+
+            for (let i = 0; i < numRobots && openCells.length; i++) {
+                const index = Math.floor(Math.random() * openCells.length);
+                const cell = openCells.splice(index, 1)[0];
+
+                const robot = {
+                    x: (cell.col + 0.5) * cellWidth,
+                    y: (cell.row + 0.5) * cellHeight,
+                    row: cell.row,
+                    col: cell.col,
+                    id: i + 1,
+                    path: []  // ← NEW!
+                };
+
+                robot.path = generatePath(robot); // <-- precompute path once!
+
+                robots.push(robot);
+            }
+
+            updateNeedStates(robots); // <-- THEN update operator need
+            // robots.forEach(robot => {
+            //     robot.consequences = generateConsequences(robot);
+            // });
+        }
+
+
+
+
+        // Initially used to generate consequences for the robots on tooltip while hovering on each robot.
+        // function generateConsequences(robot) {
+        //     const state = calculateRobotState(robot);
+
+        //     const goodBias = (state.traversability + state.visibility) / 2; // Average of traversability and visibility
+        //     const badBias = 1.0 - goodBias;
+
+        //     // Randomized starting weights, biased
+        //     let weights = {
+        //         C1: Math.random() * goodBias,  // Good navigation, good exposure
+        //         C2: Math.random() * badBias,   // Hard navigation, good exposure
+        //         C3: Math.random() * goodBias,  // Good navigation, hard exposure
+        //         C4: Math.random() * badBias    // Hard navigation, hard exposure
+        //     };
+
+        //     const sum = Object.values(weights).reduce((a, b) => a + b, 0);
+
+        //     let normalized = {};
+        //     for (let [key, val] of Object.entries(weights)) {
+        //         normalized[key] = Math.round((val / sum) * 100);
+        //     }
+
+        //     return normalized;
+        // }
+
+
+        // ========== GRID & PATH FUNCTIONS ==========
+        function getOpenCells() {
+            const openCells = [];
+            for (let r = 0; r < gridRows; r++) {
+                for (let c = 0; c < gridCols; c++) {
+                    if (gridMap[r][c]) {
+                        openCells.push({ row: r, col: c });
+                    }
+                }
+            }
+            return openCells;
+        }
+
+        function calculateVisibility() {
+            const visibilityMap = Array.from({ length: gridRows }, () => Array(gridCols).fill(false));
+            const visibilityRadius = 5;
+
+            robots.forEach(robot => {
+                for (let r = -visibilityRadius; r <= visibilityRadius; r++) {
+                    for (let c = -visibilityRadius; c <= visibilityRadius; c++) {
+                        const row = robot.row + r;
+                        const col = robot.col + c;
+                        if (row >= 0 && row < gridRows && col >= 0 && col < gridCols && 
+                            Math.sqrt(r * r + c * c) <= visibilityRadius) {
+                            visibilityMap[row][col] = true;
+                        }
+                    }
+                }
+            });
+
+            // Operator line of sight
+            let current = { row: operator.row, col: operator.col };
+            while (current.row >= 0) {
+                visibilityMap[current.row][current.col] = true;
+                current.row--;
+            }
+
+            return visibilityMap;
+        }
+
+        function generatePath(robot) {
+            const path = [];
+            let current = { row: operator.row, col: operator.col };
+            const visited = new Set();
+            visited.add(`${current.row},${current.col}`);
+            
+            const directionBias = Math.random() > 0.5 ? 1 : -1;
+            
+            while (current.row !== robot.row || current.col !== robot.col) {
+                const rowDir = robot.row - current.row;
+                const colDir = robot.col - current.col;
+                const possibleMoves = [];
+                
+                // Direct moves
+                if (rowDir !== 0) {
+                    possibleMoves.push({ row: current.row + Math.sign(rowDir), col: current.col });
+                }
+                if (colDir !== 0) {
+                    possibleMoves.push({ row: current.row, col: current.col + Math.sign(colDir) });
+                }
+                
+                // Diagonal moves (30% chance)
+                if (Math.random() > 0.7 && rowDir !== 0 && colDir !== 0) {
+                    possibleMoves.push({
+                        row: current.row + Math.sign(rowDir),
+                        col: current.col + Math.sign(colDir) * directionBias
+                    });
+                }
+                
+                // Filter valid moves
+                const validMoves = possibleMoves.filter(move => 
+                    move.row >= 0 && move.row < gridRows &&
+                    move.col >= 0 && move.col < gridCols &&
+                    !visited.has(`${move.row},${move.col}`)
+                );
+                
+                if (validMoves.length > 0) {
+                    validMoves.sort((a, b) => {
+                        const distA = Math.abs(a.row - robot.row) + Math.abs(a.col - robot.col);
+                        const distB = Math.abs(b.row - robot.row) + Math.abs(b.col - robot.col);
+                        return (distA + (Math.random() * 2 - 1)) - (distB + (Math.random() * 2 - 1));
+                    });
+                    
+                    const chosenIndex = Math.random() > 0.8 ? Math.floor(Math.random() * validMoves.length) : 0;
+                    current = validMoves[chosenIndex];
+                    visited.add(`${current.row},${current.col}`);
+                    path.push({ row: current.row, col: current.col });
+                } else {
+                    // Alternative path if stuck
+                    const alternativeMoves = [];
+                    if (current.row > 0) alternativeMoves.push({ row: current.row - 1, col: current.col });
+                    if (current.row < gridRows - 1) alternativeMoves.push({ row: current.row + 1, col: current.col });
+                    if (current.col > 0) alternativeMoves.push({ row: current.row, col: current.col - 1 });
+                    if (current.col < gridCols - 1) alternativeMoves.push({ row: current.row, col: current.col + 1 });
+                    
+                    const validAlternatives = alternativeMoves.filter(move => !visited.has(`${move.row},${move.col}`));
+                    if (validAlternatives.length > 0) {
+                        current = validAlternatives[Math.floor(Math.random() * validAlternatives.length)];
+                        visited.add(`${current.row},${current.col}`);
+                        path.push({ row: current.row, col: current.col });
+                    } else {
+                        break; // No possible moves
+                    }
+                }
+            }
+            
+            return path;
+        }
+
+        // ========== NEED CALCULATION FUNCTIONS ==========
+        function getTraversability(col, row) {
+            const pixelData = ctx.getImageData(col * cellWidth, row * cellHeight, 1, 1).data;
+            const [r, g, b] = pixelData;
+            if (r > 200 && g < 100 && b < 100) return 0.1;  // Red
+            if (r > 200 && g > 200 && b < 100) return 0.5;  // Yellow
+            if (g > 200 && r < 100 && b < 100) return 1.0;  // Green
+            return 0.5;  // Default
+        }
+
+        function getVisibility(col, row) {
+            const pixelData = ctx.getImageData(col * cellWidth, row * cellHeight, 1, 1).data;
+            const luminance = (0.299 * pixelData[0] + 0.587 * pixelData[1] + 0.114 * pixelData[2]) / 255;
+            return Math.max(0.1, luminance);
+        }
+
+        function calculateRobotState(robot) {
+            const path = robot.path;
+            if (!path || path.length === 0) return { traversability: 0.5, visibility: 0.5 };
+
+            let travSum = 0;
+            let visSum = 0;
+
+            path.forEach(cell => {
+                travSum += getTraversability(cell.col, cell.row);
+                visSum += getVisibility(cell.col, cell.row);
+            });
+
+            return {
+                traversability: travSum / path.length,
+                visibility: visSum / path.length
+            };
+        }
+
+
+        function calculateRobotNeed(robot) {
+            const state = calculateRobotState(robot);
+
+            let n_trav_robot = profileSettings.L_traversability * n_traversability_operator + (1.0 - state.traversability);
+            let n_vis_robot = profileSettings.L_visibility * n_visibility_operator + (1.0 - state.visibility);
+
+            return {
+                n_trav_robot: Math.max(0, Math.min(1, n_trav_robot)),
+                n_vis_robot: Math.max(0, Math.min(1, n_vis_robot))
+            };
+        }
+
+        function updateNeedStates(robots) {
+            const stakes = window.location.href.includes('highStake') ? 'high' : 'low';
+
+            let a_traversability;
+            let a_visibility;
+
+            if (stakes === 'high') {
+                a_traversability = Math.random() * 0.3 + 0.1; // Random between 0.1 and 0.4
+                a_visibility = Math.random() * 0.3 + 0.1;
+            } else {
+                a_traversability = Math.random() * 0.3 + 0.5; // Random between 0.5 and 0.6
+                a_visibility = Math.random() * 0.3 + 0.5;
+            }
+
+            n_traversability_operator = profileSettings.L_traversability * (1.0 - a_traversability);
+            n_visibility_operator = profileSettings.L_visibility * (1.0 - a_visibility);
+
+            n_traversability_operator = Math.max(0, Math.min(1, n_traversability_operator));
+            n_visibility_operator = Math.max(0, Math.min(1, n_visibility_operator));
+        }
+
+
+
+        function calculateConsequenceValue(robot, consequenceType) {
+            const state = calculateRobotState(robot);
+            const q = attributeQualities[consequenceType];
+            return (n_trav_robot * q.navigation) + (n_vis_robot * q.exposure);
+        }
+
+        // ========== DRAWING FUNCTIONS ==========
+        function drawMap() {
+            const visibilityMap = calculateVisibility();
+
+            for (let r = 0; r < gridRows; r++) {
+                for (let c = 0; c < gridCols; c++) {
+                    if (!visibilityMap[r][c]) {
+                        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                        ctx.fillRect(c * cellWidth, r * cellHeight, cellWidth, cellHeight);
+                    }
+                }
+            }
+        }
+
+        function drawRobots() {
+            robots.forEach(robot => {
+                ctx.beginPath();
+                ctx.moveTo(robot.x, robot.y - 10);
+                ctx.lineTo(robot.x + 10, robot.y + 10);
+                ctx.lineTo(robot.x - 10, robot.y + 10);
+                ctx.closePath();
+                ctx.fillStyle = 'blue';
+                ctx.fill();
+            });
+        }
+
+        function drawOperator() {
+            ctx.beginPath();
+            ctx.arc(operator.x, operator.y, 10, 0, 2 * Math.PI);
+            ctx.fillStyle = 'red';
+            ctx.fill();
+        }
+
+        function overlayRandomCells() {
+            const colors = ['rgba(255, 0, 0, 0.1)', 'rgba(255, 255, 0, 0.1)', 'rgba(0, 255, 0, 0.1)'];
+            for (let r = 0; r < gridRows; r++) {
+                for (let c = 0; c < gridCols; c++) {
+                    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                    ctx.fillStyle = randomColor;
+                    ctx.fillRect(c * cellWidth, r * cellHeight, cellWidth, cellHeight);
+                }
+            }
+        }
+
+        function drawConnectorPath() {
+            robots.forEach(robot => {
+                const path = robot.path;
+                if (path && path.length > 0) {
+                    ctx.beginPath();
+                    ctx.moveTo(operator.x, operator.y);
+
+                    for (let i = 0; i < path.length; i++) {
+                        const cell = path[i];
+                        const x = (cell.col + 0.5) * cellWidth;
+                        const y = (cell.row + 0.5) * cellHeight;
+
+                        ctx.lineTo(x, y);
+                    }
+
+                    ctx.strokeStyle = 'black';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                }
+            });
+        }
+
+
+        function redrawCanvas() {
+            updateNeedStates(robots);
+            
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+            const canyonImage = document.getElementById('canyonImage');
+            ctx.drawImage(canyonImage, 0, 0, canvasWidth, canvasHeight);
+            drawMap();
+            overlayRandomCells();
+            drawConnectorPath();
+            drawOperator();
+            drawRobots();
+        }
+
+        // ========== TOOLTIPS & UI ==========
+        function setupTooltips() {
+            // Operator tooltip
+            // Commented out the original tooltip code for operator
+            //     <div class="tooltip-row">
+            //         <span class="tooltip-label">Current Traversability:</span>
+            //         <span class="tooltip-value" id="opTravState">${a_traversability.toFixed(2)}</span>
+            //     </div>
+            //     <div class="tooltip-row">
+            //         <span class="tooltip-label">Current Visibility:</span>
+            //         <span class="tooltip-value" id="opVisState">${a_visibility.toFixed(2)}</span>
+            //     </div>
+            const operatorTooltip = document.createElement('div');
+            operatorTooltip.className = 'tooltip';
+            operatorTooltip.innerHTML = `
+                <div class="tooltip-header">OPERATOR STATE</div>
+                <div class="tooltip-row">
+                    <span class="tooltip-label">Traversability Need:</span>
+                    <span class="tooltip-value" id="opTravNeed">${n_traversability_operator.toFixed(2)}</span>
+                </div>
+                <div class="tooltip-row">
+                    <span class="tooltip-label">Visibility Need:</span>
+                    <span class="tooltip-value" id="opVisNeed">${n_visibility_operator.toFixed(2)}</span>
+                </div>
+               
+            `;
+            document.body.appendChild(operatorTooltip);
+
+            // Robot tooltip
+            const tooltip = document.createElement('div');
+            tooltip.id = 'robotTooltip';
+            Object.assign(tooltip.style, {
+                position: 'absolute',
+                zIndex: '1000',
+                background: 'rgba(255,255,255,0.95)',
+                padding: '8px 12px',
+                border: '1px solid #ccc',
+                borderRadius: '6px',
+                fontFamily: 'Sarabun, sans-serif',
+                fontSize: '14px',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
+                minWidth: '150px',
+                pointerEvents: 'none',
+                display: 'none',
+                transition: 'opacity 0.2s ease'
+            });
+            document.body.appendChild(tooltip);
+
+            // Legend
+            const legendDiv = document.querySelector('[style*="position: absolute; bottom: 10px; left: 10px;"]');
+            legendDiv.innerHTML = `
+                <div><span style="display:inline-block; width: 12px; height: 12px; background-color: red; margin-right: 5px;"></span>Operator</div>
+                <div><span style="display:inline-block; width: 12px; height: 12px; background-color: blue; margin-right: 5px;"></span>Robot</div>
+                <div><span style="display:inline-block; width: 12px; height: 12px; background-color: black; margin-right: 5px;"></span>Connector Path</div>
+                <div style="margin-top: 10px;"><b>Consequence Types:</b></div>
+                <div><span style="display:inline-block; width: 12px; height: 12px; background-color: rgba(255, 0, 0, 0.1); margin-right: 5px;"></span>C1: Easy nav (1) + Low exposure (1)</div>
+                <div><span style="display:inline-block; width: 12px; height: 12px; background-color: rgba(255, 255, 0, 0.1); margin-right: 5px;"></span>C2: Hard nav (0.1) + Low exposure (1)</div>
+                <div><span style="display:inline-block; width: 12px; height: 12px; background-color: rgba(0, 255, 0, 0.1); margin-right: 5px;"></span>C3: Easy nav (1) + High exposure (0.1)</div>
+                <div><span style="display:inline-block; width: 12px; height: 12px; background-color: rgba(0, 0, 255, 0.1); margin-right: 5px;"></span>C4: Hard nav (0.1) + High exposure (0.1)</div>
+            `;
+
+            // Tooltip event handlers
+            canvas.addEventListener('mousemove', function(evt) {
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = evt.clientX - rect.left;
+                const mouseY = evt.clientY - rect.top;
+                
+                // Check for robot hover
+                let closestRobot = null;
+                let minDistance = Infinity;
+                
+                robots.forEach((robot, index) => {
+                    const dx = mouseX - robot.x;
+                    const dy = mouseY - robot.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < 20 && distance < minDistance) {
+                        minDistance = distance;
+                        closestRobot = { robot, index };
+                    }
+                });
+
+                // Check for operator hover
+                const operatorDistance = Math.sqrt(Math.pow(mouseX - operator.x, 2) + Math.pow(mouseY - operator.y, 2));
+                
+                if (operatorDistance < 15) {
+                    const stakeLevel = window.location.href.includes('highStake') ? 'high' : 'low';
+                    tooltip.innerHTML = `
+                        <div style="font-weight:700;">Operator State</div>
+                        <div>Stakes: ${stakeLevel}</div>
+                        <div>Profile: ${profileSettings.type || 'balanced'}</div>
+                        <div>Traversability Need: ${n_traversability_operator.toFixed(2)}</div>
+                        <div>Visibility Need: ${n_visibility_operator.toFixed(2)}</div>
+                    `;
+                    tooltip.style.display = 'block';
+                    return;
+                }
+                let hoveredRobot = null;
+
+                // Check if mouse is close to any path segment
+                robots.forEach((robot, index) => {
+                    for (let i = 0; i < robot.path.length; i++) {
+                        const cell = robot.path[i];
+                        const cellX = (cell.col + 0.5) * cellWidth;
+                        const cellY = (cell.row + 0.5) * cellHeight;
+
+                        const dx = mouseX - cellX;
+                        const dy = mouseY - cellY;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+
+                        if (dist < 10) { // sensitivity threshold
+                            hoveredRobot = { robot, index };
+                            break;
+                        }
+                    }
+                });
+
+                if (closestRobot) {
+                    const { robot, index } = closestRobot;
+                    tooltip.innerHTML = updateRobotTooltip(robot, index);
+                    
+                    // Position tooltip near the robot
+                    let tooltipX = robot.x + 20;
+                    let tooltipY = robot.y - tooltip.offsetHeight / 2;
+                    
+                    if (tooltipX + tooltip.offsetWidth > canvasWidth) {
+                        tooltipX = robot.x - tooltip.offsetWidth - 20;
+                    }
+                    
+                    tooltipY = Math.max(10, Math.min(canvasHeight - tooltip.offsetHeight - 10, tooltipY));
+                    
+                    tooltip.style.left = `${rect.left + tooltipX}px`;
+                    tooltip.style.top = `${rect.top + tooltipY}px`;
+                    tooltip.style.display = 'block';
+
+                } else if (hoveredRobot) {
+                    const { robot, index } = hoveredRobot;
+                    tooltip.innerHTML = updateRobotTooltip(robot, index);
+
+                    // Position tooltip near mouse cursor for paths
+                    tooltip.style.left = `${evt.clientX + 15}px`;
+                    tooltip.style.top = `${evt.clientY}px`;
+                    tooltip.style.display = 'block';
+
+                } else {
+                    tooltip.style.display = 'none';
+                }
+
+            });
+
+            canvas.addEventListener('mouseleave', function() {
+                tooltip.style.display = 'none';
+            });
+        }
+        // Commented out the original tooltip code for Robot
+        // <div style="margin-top:4px;">Traversability: ${state.traversability.toFixed(2)}</div>
+        //         <div>Visibility: ${state.visibility.toFixed(2)}</div>
+
+        function updateRobotTooltip(robot, index) {
+            const robotNeed = calculateRobotNeed(robot);
+
+            const M_C1 = (robotNeed.n_trav_robot * attributeQualities.C1.navigation) + 
+                        (robotNeed.n_vis_robot * attributeQualities.C1.exposure);
+            const M_C2 = (robotNeed.n_trav_robot * attributeQualities.C2.navigation) + 
+                        (robotNeed.n_vis_robot * attributeQualities.C2.exposure);
+            const M_C3 = (robotNeed.n_trav_robot * attributeQualities.C3.navigation) + 
+                        (robotNeed.n_vis_robot * attributeQualities.C3.exposure);
+            const M_C4 = (robotNeed.n_trav_robot * attributeQualities.C4.navigation) + 
+                        (robotNeed.n_vis_robot * attributeQualities.C4.exposure);
+
+            return `
+                <div style="font-weight:700;margin-bottom:4px;">Robot ${index + 1}</div>
+                <div>C1 (Easy/Low): ${M_C1.toFixed(2)}</div>
+                <div>C2 (Hard/Low): ${M_C2.toFixed(2)}</div>
+                <div>C3 (Easy/High): ${M_C3.toFixed(2)}</div>
+                <div>C4 (Hard/High): ${M_C4.toFixed(2)}</div>
+            `;
+        }
+
+        // ========== DATA MANAGEMENT ==========
+        let userResponses = [];
+        let trialID = 1;
+
+        function recordResponse(choice, time) {
+            const robotStates = robots.map(robot => calculateRobotState(robot));
+            
+            userResponses.push({
+                ID: trialID++,
+                choice: parseInt(choice.replace('robot', '')),
+                timeElapsed: time,
+                n_traversability_operator: n_traversability_operator,
+                n_visibility_operator: n_visibility_operator,
+                stakes: window.location.href.includes('highStake') ? 'high' : 'low',
+                profile: profileSettings.type || 'balanced',
+                
+                robots: robots.map((robot) => {
+                    const state = calculateRobotState(robot);
+                    const robotNeed = calculateRobotNeed(robot);
+                    
+                    // Calculate C values using the same formula as in the tooltip
+                    const C1 = (robotNeed.n_trav_robot * attributeQualities.C1.navigation) + 
+                            (robotNeed.n_vis_robot * attributeQualities.C1.exposure);
+                    const C2 = (robotNeed.n_trav_robot * attributeQualities.C2.navigation) + 
+                            (robotNeed.n_vis_robot * attributeQualities.C2.exposure);
+                    const C3 = (robotNeed.n_trav_robot * attributeQualities.C3.navigation) + 
+                            (robotNeed.n_vis_robot * attributeQualities.C3.exposure);
+                    const C4 = (robotNeed.n_trav_robot * attributeQualities.C4.navigation) + 
+                            (robotNeed.n_vis_robot * attributeQualities.C4.exposure);
+                    
+                    return {
+                            C1: Number(C1.toFixed(4)),
+                            C2: Number(C2.toFixed(4)),
+                            C3: Number(C3.toFixed(4)),
+                            C4: Number(C4.toFixed(4)),
+                            traversability: Number(state.traversability.toFixed(4)),
+                            visibility: Number(state.visibility.toFixed(4))
+                        };
+                })
+            });
+
+            localStorage.setItem('userResponses', JSON.stringify(userResponses));
+        }
+
+        function convertToCSV(responses) {
+            const header = "ID,choice,stakes,C11,C12,C13,C14,C21,C22,C23,C24,C31,C32,C33,C34,Operator_traversability,Operator_visibility,robot1_traversability,robot1_visibility,robot2_traversability,robot2_visibility,robot3_traversability,robot3_visibility,profile,timeElapsed\n";
+            
+            let csv = header;
+            responses.forEach(response => {
+                csv += [
+                    response.ID,
+                    response.choice,
+                    response.stakes,
+                    response.robots[0].C1, response.robots[0].C2, response.robots[0].C3, response.robots[0].C4,
+                    response.robots[1].C1, response.robots[1].C2, response.robots[1].C3, response.robots[1].C4,
+                    response.robots[2].C1, response.robots[2].C2, response.robots[2].C3, response.robots[2].C4,
+                    response.n_traversability_operator,
+                    response.n_visibility_operator,
+                    response.robots[0].traversability, response.robots[0].visibility,
+                    response.robots[1].traversability, response.robots[1].visibility,
+                    response.robots[2].traversability, response.robots[2].visibility,
+                    response.profile,
+                    response.timeElapsed
+                ].join(',') + '\n';
+            });
+            
+            return csv;
+        }
+
+        function downloadCSV(filename = 'user_responses.csv') {
+            const csvData = convertToCSV(userResponses);
+            const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        // ========== EVENT HANDLERS ==========
+        function setupEventListeners() {
+            // Radio button selection
+            document.querySelectorAll('input[type="radio"][name="robot"]').forEach(radioButton => {
+                radioButton.addEventListener('change', function() {
+                    const startTime = performance.now();
+                    const choice = this.value;
+
+                    setTimeout(() => {
+                        const endTime = performance.now();
+                        recordResponse(choice, endTime - startTime);
+                    }, 500);
+                });
+            });
+
+            // Next button
+            document.querySelector('.next-button').addEventListener('click', function(event) {
+            event.preventDefault();
+            
+            if (!document.querySelector('input[name="robot"]:checked')) {
+                alert('Please select a robot path before continuing');
+                return;
+            }
+            
+            let currentCount = parseInt(localStorage.getItem('count')) || 1;
+            currentCount++; // Increment count
+            
+            if (currentCount > 30) {
+                // Generate CSV and reset
+                if (userResponses.length > 0) {
+                    const now = new Date();
+                    const filename = `${now.toISOString().slice(0,10)}-${now.toTimeString().slice(0,8).replace(/:/g,'')}-${trialID-1}-Bounding_Overwatch.csv`;
+                    downloadCSV(filename);
+                }
+                
+                // Full reset
+                localStorage.removeItem('userResponses');
+                localStorage.removeItem('count');
+                localStorage.removeItem('sessionID');
+                userResponses = [];
+                window.location.href = "BO_home_page.html";
+            } else {
+                // Update count and continue
+                localStorage.setItem('count', currentCount);
+                
+                // Alternate between high and low stakes pages
+                const nextPage = window.location.href.includes('highStake') ? 
+                    "BO_mission_lowStake.html" : "BO_mission_highStake.html";
+                window.location.href = nextPage;
+            }
+        });
+        }
+        // Enhanced reset function for both quit and switch buttons
+        function resetSession() {
+            // Clear all session data
+            localStorage.removeItem('sessionID');
+            localStorage.removeItem('count');
+            localStorage.removeItem('userResponses');
+            localStorage.removeItem('selectedProfile');
+            
+            // Generate new session ID immediately
+            localStorage.setItem('sessionID', generateSessionID());
+        }
+
+        // Update event listeners for quit and switch buttons
+        document.querySelector('.QuitButton').addEventListener('click', function() {
+            resetSession();
+            window.location.href = "BO_end_page.html";
+        });
+
+        document.getElementById('switchButton').addEventListener('click', function() {
+            resetSession();
+            window.location.href = "BO_home_page.html";
+        });
+
+        // ========== MAIN EXECUTION ==========
+        window.onload = function() {
+            initializeTracking();
+            generateMap();
+            generateRobots(3);
+            setupTooltips();
+            setupEventListeners();
+            redrawCanvas();
+            
+            // Load any existing responses
+            const storedResponses = localStorage.getItem('userResponses');
+            if (storedResponses) {
+                userResponses = JSON.parse(storedResponses);
+                trialID = userResponses.length > 0 ? Math.max(...userResponses.map(r => r.ID)) + 1 : 1;
+            }
+        };
+        </script>
+      <!-- <script>
         // ========== CONSTANTS & INITIALIZATION ==========
         const canvas = document.getElementById('overlayCanvas');
         const ctx = canvas.getContext('2d');
@@ -864,6 +1607,6 @@
                 trialID = userResponses.length > 0 ? Math.max(...userResponses.map(r => r.ID)) + 1 : 1;
             }
         };
-        </script>
+        </script> -->
     </div>
 </div>

@@ -18,7 +18,7 @@ clear all;
 % disp('User bias data imported successfully.');
 % taskChoice_Data = readtable('user_choices.csv'); % Replace with the path to your data file
 % disp('User task choice data imported successfully.');
-robotChoice_Data = readtable('G:\My Drive\myResearch\Research Experimentation\Apollo\apollo\data\Bounding_Overwatch_Data\HumanData_Bounding_Overwatch.csv');
+robotChoice_Data = readtable('G:\My Drive\myResearch\Research Experimentation\Apollo\apollo\data\Bounding_Overwatch_Data\HumanData_Bounding_Overwatch - 20Split.csv');
 % Convert all column headers to lowercase
 robotChoice_Data.Properties.VariableNames = lower(robotChoice_Data.Properties.VariableNames);
 disp('User robot choice data imported successfully.');
@@ -56,7 +56,7 @@ disp('Initializing R bridge...');
 % Configure paths
 rscript_path = 'C:\Program Files\R\R-4.4.2\bin\x64\Rscript.exe';
 r_script = 'G:\My Drive\myResearch\Research Experimentation\Apollo\apollo\example\DFT_Bounding_Overwatch.R';
-csvFile = 'G:\My Drive\myResearch\Research Experimentation\Apollo\apollo\data\Bounding_Overwatch_Data\HumanData_Bounding_Overwatch.csv';
+csvFile = 'G:\My Drive\myResearch\Research Experimentation\Apollo\apollo\data\Bounding_Overwatch_Data\HumanData_Bounding_Overwatch - 80Split.csv';
 outputDir = 'G:\My Drive\myResearch\Research Experimentation\Apollo\apollo\Output_BoundingOverwatch';
 
 % Verify installations
@@ -95,9 +95,10 @@ try
             
             % Extract parameters with validation
             %Boundedphi1, phi2 parameters
-            phi1 = max(0, validateParam(params, 'phi1', 0.5)); % Ensure non-negative
-            phi2 = min(max(0, validateParam(params, 'phi2', 0.8)), 1); % Constrain 0-1
-
+            phi1 = min(max(0, validateParam(params, 'phi1', 0.5)),5); % Ensure non-negative
+            phi2 = min(max(0, validateParam(params, 'phi2', 0.8)), 0.99); % Constrain 0-1
+            %tau = min(1 + exp(validateParam(params, 'timesteps', 0.5)),100); %Constrain to 100
+ 
             %Raw phi1, phi2 parameters
             %phi1 = validateParam(params, 'phi1', 0.5);
             %phi2 = validateParam(params, 'phi2', 0.8);
@@ -140,7 +141,8 @@ catch ME
     initial_P = zeros(3,1); % Neutral initial preferences
 end
 
-%% Step 3: MDFT Formulation to Calculate Preference Dynamics
+%% Step 3a: MDFT Formulation to Calculate Preference Dynamics in Parallel
+%%{
 % (MDFT calculations based on estimated parameters)
 % Create M matrix from current trial's attributes
 % C11-C14 are consequence attributes for Robot 1 
@@ -155,11 +157,39 @@ for current_trial = 1:height(robotChoice_Data)
         robotChoice_Data.c31(current_trial), robotChoice_Data.c32(current_trial), robotChoice_Data.c33(current_trial), robotChoice_Data.c34(current_trial)
     ];
 
+    % --- Global Min-Max Normalization ---
+    % Extract all attribute columns from the dataset
+    all_attributes = robotChoice_Data{:, {'c11','c12','c13','c14','c21','c22','c23','c24','c31','c32','c33','c34'}};
+    
+    % Calculate global min and max (ignore NaN/Inf)
+     global_min = double(min(all_attributes(:), [], 'omitnan'));
+     global_max = double(max(all_attributes(:), [], 'omitnan'));
+
+    % Calculate global min and max using percentiles (1th and 99th)
+    % all_values = all_attributes(:);          % Flatten the matrix
+    % all_values = all_values(~isnan(all_values) & ~isinf(all_values)); % Remove NaN/Inf
+    % global_min = double(prctile(all_values, 1));  % 1st percentile as min
+    % global_max = double(prctile(all_values, 99)); % 99th percentile as max
+
+    % Normalize M to [0, 1] range
+    if global_max ~= global_min  % Avoid division by zero
+        M = (M - global_min) / (global_max - global_min);
+    else
+        M = zeros(size(M));  % Fallback if all values are identical
+    end
+    
+    % Optional: Clamp to [0.01, 1] to avoid extreme values. 
+    M = max(0.01, min(1, M));
+
     % Normalize M values by dividing by 2 and clamping to [0.01, 1]
-    %M = M / 2;
-    %M = max(0.01, min(1, M));
+    %{
+    M = M / 2;
+    M = max(0.01, min(1, M));
+    %}
 
     % --- Global Max Normalization ---
+    %{
+
     global_max = max(robotChoice_Data{:, {'c11','c12','c13','c14','c21','c22','c23','c24','c31','c32','c33','c34'}}, [], 'all', 'omitnan');
     if ~isfinite(global_max) || global_max <= 0
         global_max = 1; % fallback in case of zero or NaN
@@ -167,15 +197,32 @@ for current_trial = 1:height(robotChoice_Data)
 
     M = M / global_max;              % Normalize by global max
     M = max(0.01, min(1, M));        % Clamp to [0.01, 1]
+    %}
 
+    % --- Row-wise Min-Max Normalization ---
+    %{
+    for i = 1:size(M, 1)
+        row = M(i, :);
+        min_val = min(row);
+        max_val = max(row);
+        
+        if max_val == min_val
+            M(i, :) = pmax(0.01, pmin(1, row));  % constant row: clamp only
+        else
+            norm_row = (row - min_val) / (max_val - min_val);
+            M(i, :) = max(0.01, min(1, norm_row));  % clamp to [0.01, 1]
+        end
+    end
+    %}
+    
     attributes = {'C1 - Easy Nav, Low Exposure', 'C2 - Hard Nav, Low Exposure', 'C3 - Easy Nav, High Exposure', 'C4 - Hard Nav, High Exposure'};
     beta = beta_weights ./ sum(abs(beta_weights));
     beta = beta';
 
     [E_P, V_P, choice_probs, P_tau] = calculateDFTdynamics(...
         phi1, phi2, tau, error_sd, beta, M, initial_P);
-
-    % Display results for the trial
+       
+    % Display results for the frame
     disp('=== Trial Analysis ===');
     disp(['Trial: ', num2str(current_trial)]);
     disp(['Participant: ', num2str(participant_ids(current_trial))]);
@@ -199,18 +246,84 @@ for current_trial = 1:height(robotChoice_Data)
     else
         disp('✗ Prediction differs from actual choice');
     end
-
+%{
     % Plot evolution
     figure;
-    plot(0:tau, P_tau);
+    %plot(0:tau, P_tau);
+    % Replace the plotting section with:
+    tau_rounded = round(tau);  % Ensure integer steps
+    if size(P_tau,2) == tau_rounded+1  % Validate dimensions
+        plot(0:tau_rounded, P_tau);
+    else
+        warning('Dimension mismatch: P_tau has %d cols, expected %d',...
+                size(P_tau,2), tau_rounded+1);
+        plot(P_tau');  % Fallback plot
+    end
     xlabel('Preference Step (\tau)');
     ylabel('Preference Strength');
     legend({'Robot1','Robot2','Robot3'});
     title(sprintf('Preference Evolution (Trial %d)', current_trial));
     grid on;
+%}
 end
+%}
+%% Step 3b: MDFT Formulation with State Continuity
 %{
+% Initialize preference state tracking
+if ~exist('P_final_prev', 'var')
+    P_final_prev = initial_P; % Use estimated initial preferences for first trial
+end
+
+for current_frame = 1:height(robotChoice_Data)
+    % Create M matrix for current frame
+    M = [
+        robotChoice_Data.c11(current_frame), robotChoice_Data.c12(current_frame), robotChoice_Data.c13(current_frame), robotChoice_Data.c14(current_frame);
+        robotChoice_Data.c21(current_frame), robotChoice_Data.c22(current_frame), robotChoice_Data.c23(current_frame), robotChoice_Data.c24(current_frame);
+        robotChoice_Data.c31(current_frame), robotChoice_Data.c32(current_frame), robotChoice_Data.c33(current_frame), robotChoice_Data.c34(current_frame)
+    ];
+    
+    % Normalize beta weights
+    beta = beta_weights ./ sum(abs(beta_weights));
+    
+    % Calculate DFT dynamics using previous frame's final state
+    [E_P, V_P, choice_probs, P_tau] = calculateDFTdynamics(...
+        phi1, phi2, tau, error_sd, beta, M, P_final_prev);
+    
+    % Store final preference state for next frame
+    P_final_prev = P_tau(:, end);
+    
+    % Display results
+    disp('=== frame Analysis ===');
+    disp(['Frame: ', num2str(current_frame)]);
+    disp(['Participant: ', num2str(participant_ids(current_frame))]);
+    disp(['Actual Choice: Robot ', num2str(choices(current_frame))]);
+    
+    disp('Initial Preferences (from previous frame):');
+    disp(array2table(P_tau(:,1)', 'VariableNames', {'Robot1','Robot2','Robot3'})); % Fixed this line
+    
+    disp('Final Preferences:');
+    disp(array2table(P_tau(:,end)', 'VariableNames', {'Robot1','Robot2','Robot3'})); % Fixed this line
+    
+    % Enhanced plotting with initial/final state markers
+figure;
+tau_steps = size(P_tau, 2) - 1; % Infer steps from P_tau dimensions
+plot(0:tau_steps, P_tau);
+hold on;
+% Mark initial state
+scatter(zeros(3,1), P_tau(:,1), 100, 'filled');
+% Mark final state
+scatter(tau_steps*ones(3,1), P_tau(:,end), 100, 'x', 'LineWidth', 2);
+hold off;
+
+xlabel('Preference Step (\tau)');
+ylabel('Preference Strength');
+legend({'Robot1','Robot2','Robot3','Initial State','Final State'});
+title(sprintf('Preference Evolution (frame %d)', current_frame));
+grid on;
+end
+%}
 %% Step 4: Output Results
+%{
 disp('Saving results to CSV...');
 output_table = table(E_P, V_P, P_tau(end,:)', ...
                      'VariableNames', {'ExpectedPreference', 'VariancePreference', 'FinalPreferences'});

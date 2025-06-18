@@ -18,7 +18,7 @@ clear all;
 % disp('User bias data imported successfully.');
 % taskChoice_Data = readtable('user_choices.csv'); % Replace with the path to your data file
 % disp('User task choice data imported successfully.');
-robotChoice_Data = readtable('G:\My Drive\myResearch\Research Experimentation\Apollo\apollo\data\Bounding_Overwatch_Data\HumanData_Bounding_Overwatch.csv');
+robotChoice_Data = readtable('G:\My Drive\myResearch\Research Experimentation\Apollo\apollo\data\Bounding_Overwatch_Data\HumanData_Bounding_Overwatch - 20Split.csv');
 % Convert all column headers to lowercase
 robotChoice_Data.Properties.VariableNames = lower(robotChoice_Data.Properties.VariableNames);
 disp('User robot choice data imported successfully.');
@@ -56,7 +56,7 @@ disp('Initializing R bridge...');
 % Configure paths
 rscript_path = 'C:\Program Files\R\R-4.4.2\bin\x64\Rscript.exe';
 r_script = 'G:\My Drive\myResearch\Research Experimentation\Apollo\apollo\example\DFT_Bounding_Overwatch.R';
-csvFile = 'G:\My Drive\myResearch\Research Experimentation\Apollo\apollo\data\Bounding_Overwatch_Data\HumanData_Bounding_Overwatch.csv';
+csvFile = 'G:\My Drive\myResearch\Research Experimentation\Apollo\apollo\data\Bounding_Overwatch_Data\HumanData_Bounding_Overwatch - 80Split.csv';
 outputDir = 'G:\My Drive\myResearch\Research Experimentation\Apollo\apollo\Output_BoundingOverwatch';
 
 % Verify installations
@@ -95,9 +95,10 @@ try
             
             % Extract parameters with validation
             %Boundedphi1, phi2 parameters
-            %phi1 = max(0, validateParam(params, 'phi1', 0.5)); % Ensure non-negative
-            phi2 = min(max(0, validateParam(params, 'phi2', 0.8)), 1); % Constrain 0-1
-
+            %phi1 = min(max(0, validateParam(params, 'phi1', 0.5)),5); % Ensure non-negative
+            %phi2 = min(max(0, validateParam(params, 'phi2', 0.8)), 0.99); % Constrain 0-1
+            %tau = min(1 + exp(validateParam(params, 'timesteps', 0.5)),100); %Constrain to 100
+ 
             %Raw phi1, phi2 parameters
             %phi1 = validateParam(params, 'phi1', 0.5);
             %phi2 = validateParam(params, 'phi2', 0.8);
@@ -155,11 +156,16 @@ for current_trial = 1:height(robotChoice_Data)
         robotChoice_Data.c31(current_trial), robotChoice_Data.c32(current_trial), robotChoice_Data.c33(current_trial), robotChoice_Data.c34(current_trial)
     ];
 
+
     % Normalize M values by dividing by 2 and clamping to [0.01, 1]
-    %M = M / 2;
-    %M = max(0.01, min(1, M));
+    %{
+    M = M / 2;
+    M = max(0.01, min(1, M));
+    %}
 
     % --- Global Max Normalization ---
+    %{
+
     global_max = max(robotChoice_Data{:, {'c11','c12','c13','c14','c21','c22','c23','c24','c31','c32','c33','c34'}}, [], 'all', 'omitnan');
     if ~isfinite(global_max) || global_max <= 0
         global_max = 1; % fallback in case of zero or NaN
@@ -167,14 +173,31 @@ for current_trial = 1:height(robotChoice_Data)
 
     M = M / global_max;              % Normalize by global max
     M = max(0.01, min(1, M));        % Clamp to [0.01, 1]
+    %}
 
+    % --- Row-wise Min-Max Normalization ---
+    %{
+    for i = 1:size(M, 1)
+        row = M(i, :);
+        min_val = min(row);
+        max_val = max(row);
+        
+        if max_val == min_val
+            M(i, :) = pmax(0.01, pmin(1, row));  % constant row: clamp only
+        else
+            norm_row = (row - min_val) / (max_val - min_val);
+            M(i, :) = max(0.01, min(1, norm_row));  % clamp to [0.01, 1]
+        end
+    end
+    %}
+    
     attributes = {'C1 - Easy Nav, Low Exposure', 'C2 - Hard Nav, Low Exposure', 'C3 - Easy Nav, High Exposure', 'C4 - Hard Nav, High Exposure'};
     beta = beta_weights ./ sum(abs(beta_weights));
     beta = beta';
 
     [E_P, V_P, choice_probs, P_tau] = calculateDFTdynamics(...
         phi1, phi2, tau, error_sd, beta, M, initial_P);
-
+       
     % Display results for the trial
     disp('=== Trial Analysis ===');
     disp(['Trial: ', num2str(current_trial)]);
@@ -202,7 +225,16 @@ for current_trial = 1:height(robotChoice_Data)
 
     % Plot evolution
     figure;
-    plot(0:tau, P_tau);
+    %plot(0:tau, P_tau);
+    % Replace the plotting section with:
+    tau_rounded = round(tau);  % Ensure integer steps
+    if size(P_tau,2) == tau_rounded+1  % Validate dimensions
+        plot(0:tau_rounded, P_tau);
+    else
+        warning('Dimension mismatch: P_tau has %d cols, expected %d',...
+                size(P_tau,2), tau_rounded+1);
+        plot(P_tau');  % Fallback plot
+    end
     xlabel('Preference Step (\tau)');
     ylabel('Preference Strength');
     legend({'Robot1','Robot2','Robot3'});

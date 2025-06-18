@@ -1,0 +1,201 @@
+Model run by Ryan using Apollo 0.3.5 on R 4.4.2 for Windows.
+Please acknowledge the use of Apollo by citing Hess & Palma (2019)
+  DOI 10.1016/j.jocm.2019.100170
+  www.ApolloChoiceModelling.com
+
+Model name                                  : DFT_Bounding_Overwatch
+Model description                           : DFT model on Bounding Overwatch data
+Model run at                                : 2025-06-04 22:32:43.430991
+Estimation method                           : bfgs
+Model diagnosis                             : successful convergence
+Optimisation diagnosis                      : Maximum found
+     hessian properties                     : Negative definite
+     maximum eigenvalue                     : -7.9e-05
+     reciprocal of condition number         : 4.70111e-08
+Number of individuals                       : 8
+Number of rows in database                  : 251
+Number of modelled outcomes                 : 251
+
+Number of cores used                        :  4 
+Model without mixing
+
+LL(start)                                   : -1527.56
+LL at equal shares, LL(0)                   : -275.75
+LL at observed shares, LL(C)                : NA
+LL(final)                                   : -1349.21
+Rho-squared vs equal shares                  :  -3.8928 
+Adj.Rho-squared vs equal shares              :  -3.9146 
+Rho-squared vs observed shares               :  Not applicable 
+Adj.Rho-squared vs observed shares           :  Not applicable 
+AIC                                         :  2710.42 
+BIC                                         :  2731.58 
+
+Estimated parameters                        : 6
+Time taken (hh:mm:ss)                       :  00:00:21.25 
+     pre-estimation                         :  00:00:4.56 
+     estimation                             :  00:00:12.59 
+     post-estimation                        :  00:00:4.1 
+Iterations                                  :  31  
+
+Unconstrained optimisation.
+
+Estimates:
+             Estimate        s.e.   t.rat.(0)    Rob.s.e. Rob.t.rat.(0)
+asc_1        0.007546     0.03384     0.22301     0.09270       0.08141
+asc_2       -0.028405     0.03501    -0.81143     0.09707      -0.29263
+asc_3        0.000000          NA          NA          NA            NA
+b_attr1      0.000000          NA          NA          NA            NA
+b_attr2     10.837767    23.97630     0.45202     0.20210      53.62645
+b_attr3     11.303510    23.97616     0.47145     0.16971      66.60559
+b_attr4     -3.039439   112.18877    -0.02709  4.2638e-04   -7128.41739
+phi1         5.778237     2.00144     2.88704     3.39144       1.70377
+phi2         0.100000          NA          NA          NA            NA
+error_sd     0.100000          NA          NA          NA            NA
+timesteps   10.000000          NA          NA          NA            NA
+
+
+Overview of choices for DFT model component BoundingOverwatchDFT:
+                                   alt1   alt2   alt3
+Times available                  251.00 251.00 251.00
+Times chosen                      82.00  86.00  83.00
+Percentage chosen overall         32.67  34.26  33.07
+Percentage chosen when available  32.67  34.26  33.07
+
+
+Classical covariance matrix:
+              asc_1       asc_2     b_attr2     b_attr3     b_attr4        phi1
+asc_1      0.001145  5.8506e-04  -9.161e-05  -9.130e-05   3.230e-08    0.006964
+asc_2    5.8506e-04    0.001225  -1.334e-05   9.350e-06   3.999e-07    0.001332
+b_attr2  -9.161e-05  -1.334e-05  574.863032  574.855959       574.9   -0.003439
+b_attr3  -9.130e-05   9.350e-06  574.855959  574.856382       574.9   -0.005287
+b_attr4   3.230e-08   3.999e-07  574.883553  574.883553   1.259e+04 -2.0622e-04
+phi1       0.006964    0.001332   -0.003439   -0.005287 -2.0622e-04    4.005756
+
+Robust covariance matrix:
+              asc_1       asc_2     b_attr2     b_attr3     b_attr4        phi1
+asc_1      0.008593    0.004624    0.003063    0.001230  -9.440e-07     0.03700
+asc_2      0.004624    0.009422    0.001206 -5.0774e-04  -1.138e-07     0.08337
+b_attr2    0.003063    0.001206    0.040843    0.023597   6.379e-07    -0.01795
+b_attr3    0.001230 -5.0774e-04    0.023597    0.028801  -9.935e-06     0.03570
+b_attr4  -9.440e-07  -1.138e-07   6.245e-07  -9.946e-06   1.818e-07 -5.9743e-04
+phi1       0.037004    0.083369   -0.017948    0.035704 -5.9743e-04    11.50184
+
+Classical correlation matrix:
+              asc_1       asc_2     b_attr2     b_attr3     b_attr4        phi1
+asc_1        1.0000     0.49390 -1.1291e-04 -1.1253e-04   8.508e-09     0.10283
+asc_2        0.4939     1.00000  -1.589e-05   1.114e-05   1.018e-07     0.01900
+b_attr2 -1.1291e-04  -1.589e-05      1.0000      1.0000      0.2137  -7.167e-05
+b_attr3 -1.1253e-04   1.114e-05      1.0000      1.0000      0.2137 -1.1018e-04
+b_attr4   8.508e-09   1.018e-07      0.2137      0.2137      1.0000  -9.184e-07
+phi1         0.1028     0.01900  -7.167e-05 -1.1018e-04  -9.184e-07     1.00000
+
+Robust correlation matrix:
+              asc_1       asc_2     b_attr2     b_attr3     b_attr4        phi1
+asc_1       1.00000    0.513921    0.163517     0.07820   -0.023882     0.11770
+asc_2       0.51392    1.000000    0.061468    -0.03082   -0.002749     0.25325
+b_attr2     0.16352    0.061468    1.000000     0.68800    0.007403    -0.02619
+b_attr3     0.07820   -0.030822    0.687999     1.00000   -0.137302     0.06203
+b_attr4    -0.02388   -0.002749    0.007247    -0.13745    1.000000    -0.41315
+phi1        0.11770    0.253249   -0.026186     0.06203   -0.413145     1.00000
+
+ 20 most extreme outliers in terms of lowest average per choice prediction:
+    row Avg prob per choice
+   <NA>        5.798219e-40
+ 142426        2.261696e-34
+   <NA>        5.314952e-23
+   <NA>        8.958752e-21
+ 141831        6.736031e-19
+ 124737        3.027737e-14
+   <NA>        3.353019e-14
+   <NA>        8.630726e-14
+ 175044        1.206623e-13
+   <NA>        1.806351e-13
+   <NA>        8.543186e-13
+   <NA>        2.917600e-12
+   <NA>        5.951460e-12
+   <NA>        1.544784e-11
+   <NA>        3.651904e-11
+   <NA>        1.141971e-10
+   <NA>        1.230403e-10
+   <NA>        1.230403e-10
+   <NA>        1.230403e-10
+   <NA>        1.761937e-09
+
+Changes in parameter estimates from starting values:
+              Initial    Estimate  Difference
+asc_1        -0.01210    0.007546     0.01965
+asc_2         0.03550   -0.028405    -0.06390
+asc_3         0.00000    0.000000     0.00000
+b_attr1       0.00000    0.000000     0.00000
+b_attr2       0.21520   10.837767    10.62257
+b_attr3       0.23020   11.303510    11.07331
+b_attr4       0.22360   -3.039439    -3.26304
+phi1          1.88480    5.778237     3.89344
+phi2          0.10000    0.100000     0.00000
+error_sd      0.10000    0.100000     0.00000
+timesteps    10.00000   10.000000     0.00000
+
+Settings and functions used in model definition:
+
+apollo_control
+--------------
+                       Value                                 
+modelName              "DFT_Bounding_Overwatch"              
+modelDescr             "DFT model on Bounding Overwatch data"
+indivID                "id"                                  
+nCores                 "4"                                   
+outputDirectory        "Output_BoundingOverwatch/"           
+panelData              "FALSE"                               
+debug                  "FALSE"                               
+workInLogs             "FALSE"                               
+seed                   "13"                                  
+mixing                 "FALSE"                               
+HB                     "FALSE"                               
+noValidation           "FALSE"                               
+noDiagnostics          "FALSE"                               
+calculateLLC           "TRUE"                                
+analyticHessian        "FALSE"                               
+memorySaver            "FALSE"                               
+analyticGrad           "TRUE"                                
+analyticGrad_manualSet "FALSE"                               
+overridePanel          "FALSE"                               
+preventOverridePanel   "FALSE"                               
+noModification         "FALSE"                               
+
+Hessian routines attempted
+--------------------------
+numerical second derivative of LL (using numDeriv)
+
+Scaling used in computing Hessian
+---------------------------------
+               Value
+asc_1    0.007546358
+asc_2    0.028404979
+b_attr2 10.837767325
+b_attr3 11.303510104
+b_attr4  3.039438931
+phi1     5.778236971
+
+
+apollo_probabilities
+----------------------
+function (apollo_beta, apollo_inputs, functionality = "estimate") 
+{
+    apollo_attach(apollo_beta, apollo_inputs)
+    on.exit(apollo_detach(apollo_beta, apollo_inputs))
+    P = list()
+    dft_settings = list(alternatives = c(alt1 = 1, alt2 = 2, 
+        alt3 = 3), avail = list(alt1 = 1, alt2 = 1, alt3 = 1), 
+        choiceVar = choice, attrValues = list(alt1 = list(attr1 = c11, 
+            attr2 = c12, attr3 = c13, attr4 = c14), alt2 = list(attr1 = c21, 
+            attr2 = c22, attr3 = c23, attr4 = c24), alt3 = list(attr1 = c31, 
+            attr2 = c32, attr3 = c33, attr4 = c34)), altStart = list(alt1 = asc_1, 
+            alt2 = asc_2, alt3 = asc_3), attrWeights = list(attr1 = exp(b_attr1), 
+            attr2 = exp(b_attr2), attr3 = exp(b_attr3), attr4 = exp(b_attr4)), 
+        attrScalings = 1, procPars = list(error_sd = pmax(0.01, 
+            pmin(1, error_sd)), timesteps = pmax(1, pmin(5, timesteps)), 
+            phi1 = phi1, phi2 = phi2), panelData = TRUE, componentName = "BoundingOverwatchDFT")
+    P[["model"]] = apollo_dft(dft_settings, functionality)
+    P = apollo_prepareProb(P, apollo_inputs, functionality)
+    return(P)
+}
