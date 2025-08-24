@@ -14,7 +14,6 @@ This repository hosts the **Bounding Overwatch Human-Robot Study**, a research p
   * Human-in-the-loop decision-making experiment design
   * Implementation of **Decision Field Theory (DFT)** for modeling preferencesPerfect — I can integrate your **experiment procedure and context** into the README so it accurately reflects the Bounding Overwatch study while keeping the polished format you liked. Here’s the updated full README draft:
 
-````markdown
 # Bounding Overwatch Human-Robot Study
 
 This repository hosts the **Bounding Overwatch Human-Robot Study**, a research platform designed to study human decision-making in tactical multi-robot team coordination contexts. The system collects human responses during simulated bounding overwatch missions, and applies **Decision Field Theory (DFT)** to estimate cognitive parameters and project choice evolution.
@@ -72,9 +71,10 @@ Carefully analyze this information and choose your path to ensure the safety of 
 * R Software Program (for Apollo-DFT integration)
 * Required R package:
   
-  ```R
+  ```
+  R
   install.packages("apollo")
-````
+  ````
 
 ---
 
